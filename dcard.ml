@@ -27,7 +27,7 @@ let rec remove_from_list (dcards: dcard list) (card: dcard) : dcard list =
   | h::t -> if h = card then t else h::(remove_from_list t card)
   | [] -> []
 
-let rec get_input (monopoly: bool) (message: String) : int =
+let rec get_input (monopoly: bool) (message: string) : int =
   print_string message;
   let input = read_line() in
     (match int_of_string input with
@@ -62,5 +62,5 @@ let play_card (state: gamestate) (card: dcard) : gamestate =
           (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
           if num < 10 then play_year_plenty 0 num
           else play_year_plenty ((num -(num mod 10))/10) (num mod 10)
-               | Road_Building -> (* Do road building action *)))
+               | Road_Building -> failwith "TODO"(* Do road building action *)))
   else state
