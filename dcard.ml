@@ -3,13 +3,13 @@ let play_monopoly (state: gamestate) (resource: int) : gamestate =
                   if x.color = state.playerturn
                   then acc
                   else acc + (Player.get_resource x resource))
-                 0 state.players in
+              0 state.players in
   let plyrs = List.map (fun x ->
               if x.color = state.playerturn
               then Player.change_resource x resource
                 (toAdd +(Player.get_resource x resource))
-              else Player.change_resource x resource 0) in
-  state with players = plyrs
+              else Player.change_resource x resource 0) (state.players) in
+  {state with players = plyrs}
 
 let play_year_plenty
   (state: gamestate) (resource1: int) (resource2: int) : gamestate =
@@ -42,13 +42,13 @@ let rec get_input (monopoly: bool) (message: String) : int =
 let play_card (state: gamestate) (card: dcard) : gamestate =
   let player = Player.find_player (state.playerturn) (state.players) in
   if List.mem card player.dcards then
-  let player = player with dcards = (remove_from_list player.dcards card) in
+  let player = {player with dcards = (remove_from_list player.dcards card)} in
   (match card with
   | Knight -> Board.move_robber
   | Victory_Card (name, desc) ->
        (print_endline ("You played: " ^ name ^ "- " ^ desc));
-       let plyr = player with victory_points = player.victory_points + 1 in
-       if plyr.victory_points = 10 then state = state with stage = End else
+       let plyr = {player with victory_points = player.victory_points + 1} in
+       if plyr.victory_points = 10 then state = {state with stage = End} else
        Player.change_player (state) (plyr)
   | Progress_Card p -> (match p with
                | Monopoly ->
