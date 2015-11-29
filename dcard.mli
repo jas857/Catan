@@ -18,3 +18,5 @@ type dcard =
 
 (* Play a Dcard, do what it says, and print what happens *)
 (* val play_card : gamestate -> dcard -> unit *)
+val remove_from_list : dcard list -> dcard -> dcard list
+val get_input : bool -> string -> int

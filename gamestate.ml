@@ -85,32 +85,11 @@ let add_town (gs:gamestate) (t:tile) (ci:color*int) =
   let new_board = {temp_board with tiles = rebuild_tile_list temp_board.tiles t} in
   {gs with game_board = new_board}
 
-  (* Dcard *)
-  let play_card (state: gamestate) (card: dcard) : gamestate =
-  let player = find_player (state.playerturn) (state.players) in
-  if List.mem card player.dcards then
-  let player = {player with dcards = (remove_from_list player.dcards card)} in
-  (match card with
-  | Knight -> Board.move_robber
-  | Victory_Card (name, desc) ->
-       (print_endline ("You played: " ^ name ^ "- " ^ desc));
-       let plyr = {player with victory_points = player.victory_points + 1} in
-       if plyr.victory_points = 10 then state = {state with stage = End} else
-       change_player (state) (plyr)
-  | Progress_Card p -> (match p with
-               | Monopoly ->
-          let num = get_input true
-          ("Input one type of resource to take from all opponents\n
-          (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
-          play_monopoly state num
-               | Year_of_plenty ->
-          let num = get_input false
-          ("Input two types of resources to take with no space\n
-          (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
-          if num < 10 then play_year_plenty 0 num
-          else play_year_plenty ((num -(num mod 10))/10) (num mod 10)
-               | Road_Building -> failwith "TODO"(* Do road building action *)))
-  else state
+let move_robber (state: gamestate) : gamestate = failwith "TODO"
+
+let rec change_player (state: gamestate) (plyr: player) : gamestate =
+  let lst = change_player_list (state.players) (plyr) in
+  {state with players = lst}
 
 let play_monopoly (state: gamestate) (resource: int) : gamestate =
   let toAdd = List.fold_left (fun acc x ->
@@ -132,6 +111,33 @@ let play_year_plenty
         ((get_resource plyr resource1) + 1) in
   let plyr = change_resource plyr resource2
         ((get_resource plyr resource2) + 1) in
-  Players.change_player state plyr
+  change_player state plyr
 
 let play_road_building = failwith "TODO" (* Call Road Building Method(s) *)
+
+(* Dcard *)
+  let play_card (state: gamestate) (card: dcard) : gamestate =
+  let player = find_player (state.playerturn) (state.players) in
+  if List.mem card player.dcards then
+  let player = {player with dcards = (remove_from_list player.dcards card)} in
+  (match card with
+  | Knight -> move_robber state
+  | Victory_Card (name, desc) ->
+       (print_endline ("You played: " ^ name ^ "- " ^ desc));
+       let plyr = {player with victory_points = player.victory_points + 1} in
+       if (plyr.victory_points = 10) then {state with game_stage = End} else
+       change_player (state) (plyr)
+  | Progress_Card p -> (match p with
+               | Monopoly ->
+          let num = get_input true
+          ("Input one type of resource to take from all opponents\n
+          (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
+          play_monopoly state num
+               | Year_of_plenty ->
+          let num = get_input false
+          ("Input two types of resources to take with no space\n
+          (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
+          if num < 10 then play_year_plenty state 0 num
+          else play_year_plenty state ((num -(num mod 10))/10) (num mod 10)
+               | Road_Building -> failwith "TODO"(* Do road building action *)))
+  else state

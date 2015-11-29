@@ -24,3 +24,7 @@ type player = {
 	a_i : bool
 }
 
+val find_player : color -> player list -> player
+val change_player_list : player list -> player -> player list
+val get_resource : player -> int -> int
+val change_resource : player -> int -> int -> player

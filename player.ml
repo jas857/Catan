@@ -1,17 +1,38 @@
 open Utilities
+open Dcard
+open Town
 
-let rec find_player (col: color) (lst: player list) : player option =
+(* Player module that contains information regarding:
+  -how many roads/settlements/cities the player has left
+  -what roads/settlements/cities the player has on the board
+  -the victory points the player has
+  -the player's inventory
+  -the exchange rate the player has
+  -the player's color *)
+
+type player = {
+  roads_left : int;
+  roads : (coordinates * coordinates) list;
+  settlements_left : int;
+  cities_left : int;
+  towns : town list;
+  victory_points : int;
+  dcards : dcard list;
+  resources : (int * int * int * int * int);
+  exchange : (int * int * int * int * int);
+  color : color;
+  a_i : bool
+}
+
+let rec find_player (col: color) (lst: player list) : player =
   match lst with
-  | h::t -> if h.color = col then Some h else find_player col t
-  | [] -> None
+  | h::t -> if h.color = col then h else find_player col t
+  | [] -> failwith "Will never happen"
 
-let rec change_player (state: gamestate) (plyr: player) : gamestate =
-  let rec change_player_list (lst: player list) (plyr: player) : player list =
-    (match lst with
-    | h::t -> if h.color = plyr.color then plyr::t else h::(change_player_list t plyr)
-    | [] -> [] )  in
-  let lst = change_player_list (state.players) (plyr) in
-  {state with players = lst}
+let rec change_player_list (lst: player list) (plyr: player) : player list =
+  match lst with
+  | h::t -> if h.color = plyr.color then plyr::t else h::(change_player_list t plyr)
+  | [] -> []
 
 let get_resource (plyr: player) (resource: int) : int =
   match (resource, plyr.resources) with

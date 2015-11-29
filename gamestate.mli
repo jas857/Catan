@@ -40,3 +40,5 @@ val trade : gamestate -> gamestate
 
 (* Have the AI make a move *)
 val a_i_makemove : gamestate -> gamestate
+
+val change_player : gamestate -> player -> gamestate
