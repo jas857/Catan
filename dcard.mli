@@ -1,4 +1,3 @@
-open Gamestate
 (* Dcard module that contains information for development cards *)
 
 (* Name of development card *)
@@ -18,4 +17,4 @@ type dcard =
   | Victory_Card of (name * description)
 
 (* Play a Dcard, do what it says, and print what happens *)
-val play_card : gamestate -> dcard -> unit
+(* val play_card : gamestate -> dcard -> unit *)
