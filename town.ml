@@ -1,4 +1,4 @@
-open Gamestate
+open Utilities
 
 type town = {
 	location : coordinates;

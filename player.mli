@@ -1,4 +1,4 @@
-open Gamestate
+open Utilities
 open Dcard
 open Town
 
@@ -24,11 +24,3 @@ type player = {
 	a_i : bool
 }
 
-(* Build a road, settlement, city, or dcard *)
-val build : gamestate -> string -> gamestate
-
-(* Trade among players/bank *)
-val trade : gamestate -> gamestate 
-
-(* Have the AI make a move *)
-val a_i_makemove : gamestate -> gamestate

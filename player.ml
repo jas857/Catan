@@ -1,3 +1,5 @@
+open Utilities
+
 let rec find_player (col: color) (lst: player list) : player option =
   match lst with
   | h::t -> if h.color = col then Some h else find_player col t

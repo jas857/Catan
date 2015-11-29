@@ -1,5 +1,5 @@
-open Tile 
-open Port 
+open Tile
+open Port
 open Dcard
 
 (* Board module that contains a list of tiles, a list of ports, and
@@ -11,8 +11,4 @@ type board = {
 	dcards : dcard list
 }
 
-(* Move the robber among tiles *)
-val move_robber : gamestate -> gamestate
 
-(* Pick a card out of the list of cards and remove it *)
-val pick_card : gamestate -> gamestate

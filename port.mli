@@ -1,4 +1,4 @@
-open Gamestate
+open Utilities
 
 (* Port module that contains the location of the port and
 	its modified exchange rate. *)

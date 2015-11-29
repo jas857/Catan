@@ -1,4 +1,4 @@
-open Gamestate
+open Utilities
 
 (* Tile module that contains information regarding the state of each tile *)
 
@@ -18,5 +18,5 @@ type tile = {
   robber : bool
 }
 
-(* Add town to list of towns in tile *)
-val add_town : gamestate -> tile -> (color * int) -> gamestate
+(* replace a tile  in the tile with it's updated tile *)
+val rebuild_tile_list : tile list -> tile -> tile list
