@@ -20,3 +20,6 @@ type tile = {
 
 (* replace a tile  in the tile with it's updated tile *)
 val rebuild_tile_list : tile list -> tile -> tile list
+
+(* removes the robber from the tile that has it, and returns the tile*)
+val remove_robber : tile list -> tile

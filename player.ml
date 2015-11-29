@@ -50,27 +50,5 @@ let change_resource (plyr: player) (resource: int) (amt: int) : player =
   | 2, (x,y,_,z,w) -> {plyr with resources = (x,y,amt,z,w)}
   | 3, (x,y,z,_,w) -> {plyr with resources = (x,y,z,amt,w)}
   | 4, (x,y,z,w,_) -> {plyr with resources = (x,y,z,w,amt)}
+  | _ , _          -> failwith "Change_resource parameters not met"
 
-let rec build (state: gamestate) : gamestate =
-  let input = read_line() in
-  let player = find_player (state.playerturn) (state.players) in
-  (match String.lowercase input with
-  | "road" -> if (get_resource player 0) > 0 && (get_resource player 4) > 0
-          then failwith "TODO"(* BUILD ROAD *)
-          else print_endline ("Insufficient resources"); state
-  | "settlement" -> if (get_resource player 0) > 0 &&
-             (get_resource player 1) > 0 &&
-             (get_resource player 3) > 0 &&
-             (get_resource player 4) > 0
-             then failwith "TODO"(* BUILD SETTLEMENT *)
-             else print_endline ("Insufficient resources"); state
-  | "city" -> if (get_resource player 3) > 1 &&
-           (get_resource player 2) > 2
-            then failwith "TODO"(* BUILD CITY *)
-            else print_endline ("Insufficient resources"); state
-  | "dcard" -> if (get_resource player 1) > 0 &&
-           (get_resource player 2) > 0 &&
-           (get_resource player 3) > 0
-            then failwith "TODO"(* BUILD DCARD *)
-            else print_endline ("Insufficient resources"); state
-  | _ -> build state)

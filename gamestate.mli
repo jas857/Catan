@@ -27,6 +27,7 @@ val change_stage : gamestate -> gamestate
 val find_tile : gamestate -> coordinates -> tile
 (* Add a town to the list of towns on a tile *)
 val add_town : gamestate -> tile -> (color*int) -> gamestate
+
 (* Move the robber among tiles *)
 val move_robber : gamestate -> gamestate
 
