@@ -79,11 +79,12 @@ let change_stage (gs:gamestate) =
 let find_tile  (gs:gamestate)  (c:coordinates)=
   failwith "todo"
 
+(* returns tile given a character location of the tile *)
 let rec get_tile (tiles:tile list) s =
   match tiles with
   |h::t -> if h.loc = (Char.uppercase s) then Some h else get_tile t s
   |_ -> None
-
+(* adds a new town tuple to a tile town list *)
 let add_town (gs:gamestate) (t:tile) (ci:color*int) : gamestate =
   let newT = {t with towns = ci::(t.towns)} in
   let temp_board = gs.game_board in
@@ -102,7 +103,6 @@ let rec move_robber (gs: gamestate) : gamestate =
   then (let _ = print_endline "Invalid tile location" in move_robber gs)
   else
   let newRobLoc = get_tile (gs.game_board).tiles (Bytes.get input 0) in
-
   match newRobLoc with
   |None -> let _ = print_endline "Invalid tile location" in move_robber gs
   |Some loc ->
@@ -173,11 +173,6 @@ let play_card (state: gamestate) (card: dcard) : gamestate =
                | Road_Building -> failwith "TODO"(* Do road building action *)))
   else state
 
-  let a_i_makemove gs = failwith "TODO"
-
-
-  let trade gs = failwith "TODO"
-
 let rec build (state: gamestate) (input:string): gamestate =
   let player = find_player (state.playerturn) (state.players) in
   (match String.lowercase input with
@@ -202,4 +197,9 @@ let rec build (state: gamestate) (input:string): gamestate =
   | _ -> build state input)
 
 
-let pick_card gs = failwith "TODO"
+let pick_dcard gs = failwith "TODO"
+
+let a_i_makemove gs = failwith "TODO"
+
+
+let trade gs = failwith "TODO"

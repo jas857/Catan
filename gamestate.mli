@@ -32,7 +32,7 @@ val add_town : gamestate -> tile -> (color*int) -> gamestate
 val move_robber : gamestate -> gamestate
 
 (* Pick a card out of the list of cards and remove it *)
-val pick_card : gamestate -> gamestate
+val pick_dcard : gamestate -> gamestate
 (* Build a road, settlement, city, or dcard *)
 val build : gamestate -> string -> gamestate
 
