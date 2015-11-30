@@ -2,6 +2,7 @@ open Player
 open Board
 open Utilities
 open Tile
+open Dcard
 
 (* Gamestate module. Holds information and communicates with all modules. *)
 
@@ -27,7 +28,8 @@ val change_stage : gamestate -> gamestate
 val find_tile : gamestate -> coordinates -> tile
 (* Add a town to the list of towns on a tile *)
 val add_town : gamestate -> tile -> (color*int) -> gamestate
-
+(* play a given dcard in the current gamestate*)
+val play_dcard : gamestate -> dcard -> gamestate
 (* Move the robber among tiles *)
 val move_robber : gamestate -> gamestate
 

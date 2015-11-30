@@ -147,7 +147,7 @@ let play_year_plenty
 let play_road_building = failwith "TODO" (* Call Road Building Method(s) *)
 
 (* Dcard *)
-let play_card (state: gamestate) (card: dcard) : gamestate =
+let play_dcard (state: gamestate) (card: dcard) : gamestate =
   let player = find_player (state.playerturn) (state.players) in
   if List.mem card player.dcards then
   let player = {player with dcards = (remove_from_list player.dcards card)} in
