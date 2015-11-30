@@ -28,7 +28,7 @@ let corner t =
     |'Q' -> (4, 4)
     |'R' -> (6, 4)
     |'S' -> (8, 4)
-    | _ -> failwith OutOfBoundsException
+    | _ -> failwith "OutOfBoundsException"
 
 let conv t n =
     let (r,c) = corner t in
@@ -39,7 +39,7 @@ let conv t n =
               |3 -> (3,1)
               |4 -> (2,0)
               |5 -> (1,0)
-              |_ -> failwith OutOfBoundsException in
+              |_ -> failwith "OutOfBoundsException" in
     (r+x,c+y)
 
 
