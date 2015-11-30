@@ -1,6 +1,12 @@
 
 type coordinates = (int * int)
 
+let shuffle d =
+  let _ = Random.self_init() in
+  let nd = List.map (fun c -> (Random.bits (), c)) d in
+  let sond = List.sort compare nd in
+  List.map snd sond
+
 let corner t =
     match t with
     |'A' -> (0, 0)
