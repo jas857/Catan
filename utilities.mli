@@ -8,3 +8,5 @@ type color =
 val corner : char -> (int*int)
 (* shuffles a list of objects in a random order *)
 val shuffle : 'a list -> 'a list
+(* gets the coordinates in the board given a tile location and vertex number*)
+val conv : char -> int -> coordinates
