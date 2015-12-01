@@ -4,6 +4,7 @@ open Board
 open Gamestate
 open Assertions
 open Utilities
+open Dcard
 
 
 (*Test Tile *)
@@ -26,6 +27,9 @@ TEST_UNIT = check_for_robber newTiles false === false
 
 
 (*Test Dcards *)
+let ranDeck = initialize_dcards ()
+
+TEST_UNIT = List.length ranDeck === 25
 
 
 
@@ -92,8 +96,7 @@ TEST_UNIT = change_player buildstate addRedVP ===
 (* add some more cases here *)
 
 
-(*Testing for change_stage during start stage,
-need tests for change_player as well *)
+(*Testing for change_stage during start stage *)
 
 let startstate = {playerturn = Red; players = initialize_non_ai_players ();
 game_board = ranBoard; game_stage = Start; longest_road_claimed = false;
@@ -132,6 +135,38 @@ TEST_UNIT = next.playerturn === Red
 let newStage = change_stage (change_player next
 {redPlayer with settlements_left = 3; roads_left = 13})
 TEST_UNIT = newStage.game_stage === Production
+
+
+(* Tests for add_town*)
+let unbox_get_tile a =
+  match a with
+  |Some x -> x
+  |None -> failwith "bad test"
+let temptiles = (buildstate.game_board).tiles
+let tileChar = char_of_int ((Random.int 19) + (int_of_char 'A'))
+let tileC = unbox_get_tile (get_tile temptiles tileChar)
+let curGS = add_town buildstate tileC (Red,1)
+(*Test that adding a town to a tile with no towns is done correctly *)
+let newBoard = curGS.game_board
+let newTile = unbox_get_tile (get_tile newBoard.tiles tileChar)
+TEST_UNIT = newTile.towns === [(Red,1)]
+(*Test that adding a town to a tiel that already has at least one town
+is done correctly *)
+let curGS = add_town curGS newTile (Blue,1)
+let newBoard = curGS.game_board
+let newTile = unbox_get_tile (get_tile newBoard.tiles tileChar)
+TEST_UNIT =
+newTile.towns === [(Blue,1); (Red,1)]
+
+let curGS = add_town curGS newTile (Red,1)
+let newBoard = curGS.game_board
+let newTile = unbox_get_tile (get_tile newBoard.tiles tileChar)
+TEST_UNIT =
+newTile.towns === [(Red,1) ;(Blue,1); (Red,1)]
+
+
+
+(*Tests for move_robber *)
 
 
 
