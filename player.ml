@@ -51,3 +51,11 @@ let change_resource (plyr: player) (resource: int) (amt: int) : player =
   | 4, (x,y,z,w,_) -> {plyr with resources = (x,y,z,w,amt)}
   | _ , _          -> failwith "Change_resource parameters not met"
 
+let init_non_ai_player (c:color) = {roads_left = 15; roads = []; settlements_left = 5;
+  cities_left = 4; towns = []; victory_points = 0;
+  dcards = []; resources = (0,0,0,0,0); exchange = (4,4,4,4,4);
+  color = c; a_i = false; army_size = 0; largest_army = false;
+  road_size = 0; longest_road = false}
+let initialize_non_ai_players () =
+  [init_non_ai_player Red; init_non_ai_player Blue;
+  init_non_ai_player White; init_non_ai_player Orange]
