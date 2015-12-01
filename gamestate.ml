@@ -14,7 +14,9 @@ type gamestate = {
   playerturn : color;
   players : player list;
   game_board : board;
-  game_stage : stage
+  game_stage : stage;
+  longest_road_claimed : bool;
+  largest_army_claimed : bool
 }
 
 
@@ -62,9 +64,11 @@ let choose_next_start (gs:gamestate) =
   (* Change the turn to the next player *)
 let change_turn (gs:gamestate) =
   next_forward gs
+
   (*print out victor and any other details about game over*)
 let game_complete (gs:gamestate) =
   failwith "todo"
+
 (* Change the stage of the game, should only be called when a player has
 has finsihed a stage and the stage should be changed *)
 let change_stage (gs:gamestate) =
@@ -84,6 +88,7 @@ let rec get_tile (tiles:tile list) s =
   match tiles with
   |h::t -> if h.loc = (Char.uppercase s) then Some h else get_tile t s
   |_ -> None
+
 (* adds a new town tuple to a tile town list *)
 let add_town (gs:gamestate) (t:tile) (ci:color*int) : gamestate =
   let newT = {t with towns = ci::(t.towns)} in
@@ -137,7 +142,7 @@ let play_monopoly (state: gamestate) (resource: int) : gamestate =
 
 let play_year_plenty
   (state: gamestate) (resource1: int) (resource2: int) : gamestate =
-  let plyr = find_player (state.playerturn) (state.players) in
+  let plyr = match_color (state.playerturn) (state.players) in
   let plyr = change_resource plyr resource1
         ((get_resource plyr resource1) + 1) in
   let plyr = change_resource plyr resource2
@@ -146,13 +151,42 @@ let play_year_plenty
 
 let play_road_building = failwith "TODO" (* Call Road Building Method(s) *)
 
-(* Dcard *)
+let rec update_largest_army (players: player list) (changing_player: player) =
+  match players with
+  | [] -> []
+  | h::t -> if h.color = changing_player.color then
+              changing_player::(update_largest_army t changing_player)
+            else
+              if h.largest_army then
+                if changing_player.army_size > h.army_size then
+                  let plyr = {h with victory_points = h.victory_points - 2;
+                                     largest_army = false} in
+                  plyr::t
+                else
+                  h::t
+              else
+                h::(update_largest_army t changing_player)
+
+let check_largest_army (state: gamestate) (changing_player: player): gamestate =
+  let new_players = update_largest_army state.players changing_player in
+  if state.players = new_players then
+    if state.largest_army_claimed = false then
+    {state with players =
+                        (change_player_list state.players
+                          {changing_player with
+                            victory_points = changing_player.victory_points + 2;
+                            largest_army = true});
+                largest_army_claimed = true}
+    else change_player state changing_player
+  else {state with players = new_players}
+
 let play_dcard (state: gamestate) (card: dcard) : gamestate =
-  let player = find_player (state.playerturn) (state.players) in
+  let player = match_color (state.playerturn) (state.players) in
   if List.mem card player.dcards then
   let player = {player with dcards = (remove_from_list player.dcards card)} in
   (match card with
-  | Knight -> move_robber state
+  | Knight -> move_robber
+      (check_largest_army state {player with army_size = player.army_size + 1})
   | Victory_Card (name, desc) ->
        (print_endline ("You played: " ^ name ^ "- " ^ desc));
        let plyr = {player with victory_points = player.victory_points + 1} in
@@ -160,21 +194,22 @@ let play_dcard (state: gamestate) (card: dcard) : gamestate =
        change_player (state) (plyr)
   | Progress_Card p -> (match p with
                | Monopoly ->
-          let num = get_input true
-          ("Input one type of resource to take from all opponents\n
-          (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
-          play_monopoly state num
+                let num = get_input true
+                ("Input one type of resource to take from all opponents\n
+                (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
+                play_monopoly state num
                | Year_of_plenty ->
-          let num = get_input false
-          ("Input two types of resources to take with no space\n
-          (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
-          if num < 10 then play_year_plenty state 0 num
-          else play_year_plenty state ((num -(num mod 10))/10) (num mod 10)
+                let num = get_input false
+                ("Input two types of resources to take with no space\n
+                (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
+                if num < 10 then play_year_plenty state 0 num
+                else
+                  play_year_plenty state ((num -(num mod 10))/10) (num mod 10)
                | Road_Building -> failwith "TODO"(* Do road building action *)))
   else state
 
 let rec build (state: gamestate) (input:string): gamestate =
-  let player = find_player (state.playerturn) (state.players) in
+  let player = match_color (state.playerturn) (state.players) in
   (match String.lowercase input with
   |"road" -> if (get_resource player 0) > 0 && (get_resource player 4) > 0
           then failwith "TODO"(* BUILD ROAD *)
@@ -200,6 +235,5 @@ let rec build (state: gamestate) (input:string): gamestate =
 let pick_dcard gs = failwith "TODO"
 
 let a_i_makemove gs = failwith "TODO"
-
 
 let trade gs = failwith "TODO"

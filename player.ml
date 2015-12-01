@@ -21,13 +21,12 @@ type player = {
   resources : (int * int * int * int * int);
   exchange : (int * int * int * int * int);
   color : color;
-  a_i : bool
+  a_i : bool;
+  army_size : int;
+  largest_army : bool;
+  road_size : int;
+  longest_road : bool
 }
-
-let rec find_player (col: color) (lst: player list) : player =
-  match lst with
-  | h::t -> if h.color = col then h else find_player col t
-  | [] -> failwith "Will never happen"
 
 let rec change_player_list (lst: player list) (plyr: player) : player list =
   match lst with

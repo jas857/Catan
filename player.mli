@@ -21,10 +21,13 @@ type player = {
 	resources : (int * int * int * int * int);
 	exchange : (int * int * int * int * int);
 	color : color;
-	a_i : bool
+	a_i : bool;
+	army_size : int;
+	largest_army : bool;
+	road_size : int;
+	longest_road : bool
 }
 
-val find_player : color -> player list -> player
 val change_player_list : player list -> player -> player list
 val get_resource : player -> int -> int
 val change_resource : player -> int -> int -> player

@@ -15,7 +15,9 @@ type gamestate = {
 	playerturn : color;
 	players : player list;
 	game_board : board;
-	game_stage : stage
+	game_stage : stage;
+  longest_road_claimed : bool;
+  largest_army_claimed : bool
 }
 
 (* Change the turn to a different player *)
