@@ -10,3 +10,6 @@ val corner : char -> (int*int)
 val shuffle : 'a list -> 'a list
 
 val string_to_char_list : string -> char list
+(* gets the coordinates in the board given a tile location and vertex number*)
+val conv : char -> int -> coordinates
+

@@ -23,3 +23,5 @@ val rebuild_tile_list : tile list -> tile -> tile list
 
 (* removes the robber from the tile that has it, and returns the tile*)
 val remove_robber : tile list -> tile
+(* Generates the randomly placed tile list that makes up the board*)
+val initialize_tiles : unit -> tile list

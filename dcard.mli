@@ -20,3 +20,5 @@ type dcard =
 (* val play_card : gamestate -> dcard -> unit *)
 val remove_from_list : dcard list -> dcard -> dcard list
 val get_input : bool -> string -> int
+(* Generates the stack fo dcards in a random order *)
+val initialize_dcards : unit -> dcard list
