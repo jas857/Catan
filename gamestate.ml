@@ -202,25 +202,16 @@ let play_dcard (state: gamestate) (card: dcard) : gamestate =
                | Road_Building -> failwith "TODO"(* Do road building action *)))
   else state
 
-
-(* Dcard *)
-
-(*check whether or not it is possible to build a road where specified*)
-let is_valid_build_rode (start_tile: string) (start_corner: string)
-(end_tile: string) (end_corner: string) (p : player): bool = failwith "TODO"
-
-
-
 let rec search_list (coor:coordinates) (tcoorList): bool =
   match tcoorList with
   | [] -> false
-  | (x,y)::t -> if ((x == coor) || (y == coor)) then true
+  | (x,y)::t -> if ((x = coor) || (y = coor)) then true
                 else search_list coor t
 
 let rec search_towns (coor: coordinates) (towns: town list): bool =
   match towns with
   | [] -> false
-  | h::t -> if (coor == h.location)
+  | h::t -> if (coor = h.location)
               then true
             else search_towns coor t
 
@@ -229,39 +220,61 @@ let rec search_towns (coor: coordinates) (towns: town list): bool =
 let is_valid_build_road (coor: coordinates) (p : player): bool =
   (search_list coor p.roads) || (search_towns coor p.towns)
 
+let is_int s =
+  try ignore (int_of_string s); true
+  with _ -> false
 
-(*
 (*modifies the gamestate to include the built road*)
 let rec build_road (state: gamestate): gamestate =
   let _ = print_string
   "Please enter the letter of the tile you would like to start your road on: " in
-  let input_start_tile = read_line() in
+  let start_tile = read_line() in
+  if(String.length start_tile <> 1) then let _ =
+  print_string "unacceptable input" in build_road state
+  else let s_tile = start_tile.[0] in
+
+
   let _ = print_string "Please enter the number of the tile
   corner you would like to start your road on: " in
-  let input_start_corner = read_line() in
+  let start_corner = read_line() in
+  if(not (is_int start_corner)) then let _ =
+  print_string "unacceptable input" in build_road state
+  else let s_corner = int_of_string start_corner in
+
+
   let _ = print_string
   "Please enter the letter of the tile you would like to start your road on: " in
-  let input_end_tile = read_line() in
+  let end_tile = read_line() in
+  if(String.length start_tile <> 1) then let _ =
+  print_string "unacceptable input" in build_road state
+  else let e_tile = end_tile.[0] in
+
+
   let _ = print_string "Please enter the number of the tile corner you
   would like to start your road on: " in
-  let input_end_corner = read_line() in
-  let startTileCoor = (conv input_start_tile input_start_corner) in
-        let endTileCoor = (conv input_end_tile input_end_corner) in
-        let currentPlayer = find_player playerturn state.players in
+  let end_corner = read_line() in
+  if(not (is_int end_corner)) then let _ =
+  print_string "unacceptable input" in build_road state
+  else let e_corner = int_of_string end_corner in
+
+
+
+  let startTileCoor = (conv s_tile s_corner) in
+        let endTileCoor = (conv e_tile e_corner) in
+        let currentPlayer = find_player state.playerturn state.players in
         if((is_valid_build_road startTileCoor currentPlayer)
           || (is_valid_build_road endTileCoor currentPlayer))
         then
-
-
         let updatePlayer = {currentPlayer with roads =
-        (((startTileCoor),(endTileCoor))::roads)} in
-        let updatePlayerAgain = {currentPlayer with
-        roads_left = (roads_left - 1)} in
-        let newPlayerList = change_player_list players updatePlayerAgain in
-        {gamestate with players = newPlayerList}
+        (((startTileCoor),(endTileCoor))::(currentPlayer.roads))} in
+        let updatePlayerAgain = {updatePlayer with
+        roads_left = (updatePlayer.roads_left - 1)} in
+        let newPlayerList = change_player_list state.players updatePlayerAgain in
+        {state with players = newPlayerList}
+
+
   else let _ = print_string "The inputs you have entered
    are not valid. Please try again." in build_road state
-*)
 let rec build (state: gamestate) (input:string): gamestate =
   let player = find_player (state.playerturn) (state.players) in
   (match String.lowercase input with
