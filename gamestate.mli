@@ -12,13 +12,21 @@ type stage =
 
 (* State of the game *)
 type gamestate = {
+<<<<<<< HEAD
 	playerturn : color;
 	players : player list;
 	game_board : board;
 	game_stage : stage;
+=======
+  playerturn : color;
+  players : player list;
+  game_board : board;
+  game_stage : stage;
+>>>>>>> 612645b139cab8dadcfa3221e49000752061ea36
   longest_road_claimed : bool;
   largest_army_claimed : bool
 }
+
 
 (* Change the turn to a different player *)
 val change_turn : gamestate -> gamestate
@@ -26,8 +34,6 @@ val change_turn : gamestate -> gamestate
 (* Change the stage of the game *)
 val change_stage : gamestate -> gamestate
 
-(* Find the tile corresponding to coordinates *)
-val find_tile : gamestate -> coordinates -> tile
 (* Add a town to the list of towns on a tile *)
 val add_town : gamestate -> tile -> (color*int) -> gamestate
 (* play a given dcard in the current gamestate*)

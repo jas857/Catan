@@ -3,6 +3,7 @@ open Board
 open Utilities
 open Dcard
 open Tile
+open Town
 
 (* Gamestate module. Holds information and communicates with all modules. *)
 
@@ -79,9 +80,6 @@ let change_stage (gs:gamestate) =
   |Build -> change_turn gs
   |End -> game_complete gs
 
-(* Find the tile corresponding to coordinates *)
-let find_tile  (gs:gamestate)  (c:coordinates)=
-  failwith "todo"
 
 (* returns tile given a character location of the tile *)
 let rec get_tile (tiles:tile list) s =
@@ -149,8 +147,7 @@ let play_year_plenty
         ((get_resource plyr resource2) + 1) in
   change_player state plyr
 
-let play_road_building = failwith "TODO" (* Call Road Building Method(s) *)
-
+let play_road_building () = failwith "TODO" (* Call Road Building Method(s) *)
 let rec update_largest_army (players: player list) (changing_player: player) =
   match players with
   | [] -> []
@@ -180,6 +177,38 @@ let check_largest_army (state: gamestate) (changing_player: player): gamestate =
     else change_player state changing_player
   else {state with players = new_players}
 
+<<<<<<< HEAD
+let rec update_largest_army (players: player list) (changing_player: player) =
+  match players with
+  | [] -> []
+  | h::t -> if h.color = changing_player.color then
+              changing_player::(update_largest_army t changing_player)
+            else
+              if h.largest_army then
+                if changing_player.army_size > h.army_size then
+                  let plyr = {h with victory_points = h.victory_points - 2;
+                                     largest_army = false} in
+                  plyr::t
+                else
+                  h::t
+              else
+                h::(update_largest_army t changing_player)
+
+let check_largest_army (state: gamestate) (changing_player: player): gamestate =
+  let new_players = update_largest_army state.players changing_player in
+  if state.players = new_players then
+    if state.largest_army_claimed = false then
+    {state with players =
+                        (change_player_list state.players
+                          {changing_player with
+                            victory_points = changing_player.victory_points + 2;
+                            largest_army = true});
+                largest_army_claimed = true}
+    else change_player state changing_player
+  else {state with players = new_players}
+
+=======
+>>>>>>> 612645b139cab8dadcfa3221e49000752061ea36
 let play_dcard (state: gamestate) (card: dcard) : gamestate =
   let player = match_color (state.playerturn) (state.players) in
   if List.mem card player.dcards then
@@ -208,6 +237,79 @@ let play_dcard (state: gamestate) (card: dcard) : gamestate =
                | Road_Building -> failwith "TODO"(* Do road building action *)))
   else state
 
+let rec search_list (coor:coordinates) (tcoorList): bool =
+  match tcoorList with
+  | [] -> false
+  | (x,y)::t -> if ((x = coor) || (y = coor)) then true
+                else search_list coor t
+
+let rec search_towns (coor: coordinates) (towns: town list): bool =
+  match towns with
+  | [] -> false
+  | h::t -> if (coor = h.location)
+              then true
+            else search_towns coor t
+
+
+(*check whether or not it is possible to build a road where specified*)
+let is_valid_build_road (coor: coordinates) (p : player): bool =
+  (search_list coor p.roads) || (search_towns coor p.towns)
+
+let is_int s =
+  try ignore (int_of_string s); true
+  with _ -> false
+
+(*modifies the gamestate to include the built road*)
+let rec build_road (state: gamestate): gamestate =
+  let _ = print_string
+  "Please enter the letter of the tile you would like to start your road on: " in
+  let start_tile = read_line() in
+  if(String.length start_tile <> 1) then let _ =
+  print_string "unacceptable input" in build_road state
+  else let s_tile = start_tile.[0] in
+
+
+  let _ = print_string "Please enter the number of the tile
+  corner you would like to start your road on: " in
+  let start_corner = read_line() in
+  if(not (is_int start_corner)) then let _ =
+  print_string "unacceptable input" in build_road state
+  else let s_corner = int_of_string start_corner in
+
+
+  let _ = print_string
+  "Please enter the letter of the tile you would like to start your road on: " in
+  let end_tile = read_line() in
+  if(String.length start_tile <> 1) then let _ =
+  print_string "unacceptable input" in build_road state
+  else let e_tile = end_tile.[0] in
+
+
+  let _ = print_string "Please enter the number of the tile corner you
+  would like to start your road on: " in
+  let end_corner = read_line() in
+  if(not (is_int end_corner)) then let _ =
+  print_string "unacceptable input" in build_road state
+  else let e_corner = int_of_string end_corner in
+
+
+
+  let startTileCoor = (conv s_tile s_corner) in
+        let endTileCoor = (conv e_tile e_corner) in
+        let currentPlayer = find_player state.playerturn state.players in
+        if((is_valid_build_road startTileCoor currentPlayer)
+          || (is_valid_build_road endTileCoor currentPlayer))
+        then
+        let updatePlayer = {currentPlayer with roads =
+        (((startTileCoor),(endTileCoor))::(currentPlayer.roads))} in
+        let updatePlayerAgain = {updatePlayer with
+        roads_left = (updatePlayer.roads_left - 1)} in
+        let newPlayerList = change_player_list state.players updatePlayerAgain in
+        {state with players = newPlayerList}
+
+
+  else let _ = print_string "The inputs you have entered
+   are not valid. Please try again." in build_road state
 let rec build (state: gamestate) (input:string): gamestate =
   let player = match_color (state.playerturn) (state.players) in
   (match String.lowercase input with
