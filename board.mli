@@ -8,7 +8,8 @@ open Dcard
 type board = {
 	tiles : tile list;
 	ports : port list;
-	dcards : dcard list
+	dcards : dcard list;
+    blocks : bool array array
 }
 
 (* Generates a new Board to be used by randomly placing tiles, and randomly
