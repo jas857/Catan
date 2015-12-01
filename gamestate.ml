@@ -89,7 +89,7 @@ let rec get_tile (tiles:tile list) s =
 
 (* adds a new town tuple to a tile town list *)
 let add_town (gs:gamestate) (t:tile) (ci:color*int) : gamestate =
-  let newT = {t with towns = ci::(t.towns)} in
+  let newT = {t with towns = (ci::(t.towns))} in
   let temp_board = gs.game_board in
   let new_board =
   {temp_board with tiles = rebuild_tile_list temp_board.tiles newT} in
@@ -97,13 +97,13 @@ let add_town (gs:gamestate) (t:tile) (ci:color*int) : gamestate =
 
 
 (* removes robber from current location, and then places robber in new
-location*)
-let rec move_robber (gs: gamestate) : gamestate =
+location given by the input string*)
+let rec move_robber (gs: gamestate): gamestate =
   let _ = print_string
   "Please enter the letter of the tile you would like to move the robber to: " in
   let input = read_line() in
   if (Bytes.length input) > 1
-  then (let _ = print_endline "Invalid tile location" in move_robber gs)
+  then (let _ = print_endline "Invalid tile location" in move_robber gs )
   else
   let newRobLoc = get_tile (gs.game_board).tiles (Bytes.get input 0) in
   match newRobLoc with
