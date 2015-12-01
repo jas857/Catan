@@ -294,7 +294,7 @@ let rec build_road (state: gamestate): gamestate =
 
   let startTileCoor = (conv s_tile s_corner) in
         let endTileCoor = (conv e_tile e_corner) in
-        let currentPlayer = find_player state.playerturn state.players in
+        let currentPlayer = match_color state.playerturn state.players in
         if((is_valid_build_road startTileCoor currentPlayer)
           || (is_valid_build_road endTileCoor currentPlayer))
         then
