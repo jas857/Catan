@@ -62,9 +62,9 @@ let choose_next_start (gs:gamestate) =
   else
   failwith "Change_stage called at incorrect time"
 
-  (* Change the turn to the next player *)
+  (* Change the turn to the next player during play phase *)
 let change_turn (gs:gamestate) =
-  next_forward gs
+  {(next_forward gs) with game_stage = Production}
 
   (*print out victor and any other details about game over*)
 let game_complete (gs:gamestate) =
