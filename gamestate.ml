@@ -204,32 +204,6 @@ let play_dcard (state: gamestate) (card: dcard) : gamestate =
 
 
 (* Dcard *)
-let play_dcard (state: gamestate) (card: dcard) : gamestate =
-  let player = find_player (state.playerturn) (state.players) in
-  if List.mem card player.dcards then
-  let player = {player with dcards = (remove_from_list player.dcards card)} in
-  (match card with
-  | Knight -> move_robber state
-  | Victory_Card (name, desc) ->
-       (print_endline ("You played: " ^ name ^ "- " ^ desc));
-       let plyr = {player with victory_points = player.victory_points + 1} in
-       if (plyr.victory_points = 10) then {state with game_stage = End} else
-       change_player (state) (plyr)
-  | Progress_Card p -> (match p with
-               | Monopoly ->
-          let num = get_input true
-          ("Input one type of resource to take from all opponents\n
-          (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
-          play_monopoly state num
-               | Year_of_plenty ->
-          let num = get_input false
-          ("Input two types of resources to take with no space\n
-          (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
-          if num < 10 then play_year_plenty state 0 num
-          else play_year_plenty state ((num -(num mod 10))/10) (num mod 10)
-               | Road_Building -> failwith "TODO"(* Do road building action *)))
-  else state
-
 
 (*check whether or not it is possible to build a road where specified*)
 let is_valid_build_rode (start_tile: string) (start_corner: string)
