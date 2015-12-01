@@ -51,7 +51,6 @@ let change_resource (plyr: player) (resource: int) (amt: int) : player =
   | 4, (x,y,z,w,_) -> {plyr with resources = (x,y,z,w,amt)}
   | _ , _          -> failwith "Change_resource parameters not met"
 
-<<<<<<< HEAD
 let rec update_largest_army (players: player list) (changing_player: player) =
   match players with
   | [] -> []
@@ -67,7 +66,7 @@ let rec update_largest_army (players: player list) (changing_player: player) =
                   h::t
               else
                 h::(update_largest_army t changing_player)
-=======
+
 let init_non_ai_player (c:color) = {roads_left = 15; roads = []; settlements_left = 5;
   cities_left = 4; towns = []; victory_points = 0;
   dcards = []; resources = (0,0,0,0,0); exchange = (4,4,4,4,4);
@@ -76,4 +75,4 @@ let init_non_ai_player (c:color) = {roads_left = 15; roads = []; settlements_lef
 let initialize_non_ai_players () =
   [init_non_ai_player Red; init_non_ai_player Blue;
   init_non_ai_player White; init_non_ai_player Orange]
->>>>>>> bf640b7f8970aeb2854405dcc474ed85478cb292
+
