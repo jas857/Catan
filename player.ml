@@ -40,7 +40,7 @@ let get_resource (plyr: player) (resource: int) : int =
   | 2, (_,_,x,_,_) -> x (* Ore *)
   | 3, (_,_,_,x,_) -> x (* Grain *)
   | 4, (_,_,_,_,x) -> x (* Lumber *)
-  | _ -> failwith "Something went wrong"
+  | _ -> failwith "Resource does not exist"
 
 let change_resource (plyr: player) (resource: int) (amt: int) : player =
   match (resource, plyr.resources) with
@@ -51,3 +51,18 @@ let change_resource (plyr: player) (resource: int) (amt: int) : player =
   | 4, (x,y,z,w,_) -> {plyr with resources = (x,y,z,w,amt)}
   | _ , _          -> failwith "Change_resource parameters not met"
 
+let rec update_largest_army (players: player list) (changing_player: player) =
+  match players with
+  | [] -> []
+  | h::t -> if h.color = changing_player.color then
+              changing_player::(update_largest_army t changing_player)
+            else
+              if h.largest_army then
+                if changing_player.army_size > h.army_size then
+                  let plyr = {h with victory_points = h.victory_points - 2;
+                                     largest_army = false} in
+                  plyr::t
+                else
+                  h::t
+              else
+                h::(update_largest_army t changing_player)

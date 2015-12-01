@@ -31,3 +31,4 @@ type player = {
 val change_player_list : player list -> player -> player list
 val get_resource : player -> int -> int
 val change_resource : player -> int -> int -> player
+val update_largest_army : player list -> player -> player list
