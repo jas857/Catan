@@ -9,7 +9,7 @@ type board = {
 }
 
 let initialize_board () =
-    {initialize_tiles ();
-     ports;
-     initialize_dcards ();
+    {tiles=initialize_tiles ();
+     ports=ports;
+     dcards=initialize_dcards ();
      }
