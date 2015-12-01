@@ -148,37 +148,7 @@ let play_year_plenty
   change_player state plyr
 
 let play_road_building () = failwith "TODO" (* Call Road Building Method(s) *)
-let rec update_largest_army (players: player list) (changing_player: player) =
-  match players with
-  | [] -> []
-  | h::t -> if h.color = changing_player.color then
-              changing_player::(update_largest_army t changing_player)
-            else
-              if h.largest_army then
-                if changing_player.army_size > h.army_size then
-                  let plyr = {h with victory_points = h.victory_points - 2;
-                                     largest_army = false} in
-                  plyr::t
-                else
-                  h::t
-              else
-                h::(update_largest_army t changing_player)
 
-let check_largest_army (state: gamestate) (changing_player: player): gamestate =
-  let new_players = update_largest_army state.players changing_player in
-  if state.players = new_players then
-    if state.largest_army_claimed = false then
-    {state with players =
-                        (change_player_list state.players
-                          {changing_player with
-                            victory_points = changing_player.victory_points + 2;
-                            largest_army = true});
-                largest_army_claimed = true}
-    else change_player state changing_player
-  else {state with players = new_players}
-<<<<<<< HEAD
-
-<<<<<<< HEAD
 let rec update_largest_army (players: player list) (changing_player: player) =
   match players with
   | [] -> []
@@ -208,11 +178,35 @@ let check_largest_army (state: gamestate) (changing_player: player): gamestate =
     else change_player state changing_player
   else {state with players = new_players}
 
-=======
->>>>>>> 612645b139cab8dadcfa3221e49000752061ea36
-=======
+let rec update_largest_army (players: player list) (changing_player: player) =
+  match players with
+  | [] -> []
+  | h::t -> if h.color = changing_player.color then
+              changing_player::(update_largest_army t changing_player)
+            else
+              if h.largest_army then
+                if changing_player.army_size > h.army_size then
+                  let plyr = {h with victory_points = h.victory_points - 2;
+                                     largest_army = false} in
+                  plyr::t
+                else
+                  h::t
+              else
+                h::(update_largest_army t changing_player)
 
->>>>>>> 612645b139cab8dadcfa3221e49000752061ea36
+let check_largest_army (state: gamestate) (changing_player: player): gamestate =
+  let new_players = update_largest_army state.players changing_player in
+  if state.players = new_players then
+    if state.largest_army_claimed = false then
+    {state with players =
+                        (change_player_list state.players
+                          {changing_player with
+                            victory_points = changing_player.victory_points + 2;
+                            largest_army = true});
+                largest_army_claimed = true}
+    else change_player state changing_player
+  else {state with players = new_players}
+
 let play_dcard (state: gamestate) (card: dcard) : gamestate =
   let player = match_color (state.playerturn) (state.players) in
   if List.mem card player.dcards then

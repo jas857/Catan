@@ -27,16 +27,6 @@ type player = {
   road_size : int;
   longest_road : bool
 }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-=======
->>>>>>> 612645b139cab8dadcfa3221e49000752061ea36
-let rec find_player (col: color) (lst: player list) : player =
-  match lst with
-  | h::t -> if h.color = col then h else find_player col t
-  | [] -> failwith "Will never happen"
->>>>>>> 612645b139cab8dadcfa3221e49000752061ea36
 
 let rec change_player_list (lst: player list) (plyr: player) : player list =
   match lst with

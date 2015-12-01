@@ -12,23 +12,10 @@ type stage =
 
 (* State of the game *)
 type gamestate = {
-<<<<<<< HEAD
-<<<<<<< HEAD
-	playerturn : color;
-	players : player list;
-	game_board : board;
-	game_stage : stage;
-=======
-=======
->>>>>>> 612645b139cab8dadcfa3221e49000752061ea36
   playerturn : color;
   players : player list;
   game_board : board;
   game_stage : stage;
-<<<<<<< HEAD
->>>>>>> 612645b139cab8dadcfa3221e49000752061ea36
-=======
->>>>>>> 612645b139cab8dadcfa3221e49000752061ea36
   longest_road_claimed : bool;
   largest_army_claimed : bool
 }
