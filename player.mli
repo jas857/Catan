@@ -12,6 +12,7 @@ open Town
 
 type player = {
 <<<<<<< HEAD
+<<<<<<< HEAD
 	roads_left : int;
 	roads : (coordinates * coordinates) list;
 	settlements_left : int;
@@ -46,6 +47,24 @@ type player = {
   road_size : int;
   longest_road : bool
 }
+=======
+  roads_left : int;
+  roads : (coordinates * coordinates) list;
+  settlements_left : int;
+  cities_left : int;
+  towns : town list;
+  victory_points : int;
+  dcards : dcard list;
+  resources : (int * int * int * int * int);
+  exchange : (int * int * int * int * int);
+  color : color;
+  a_i : bool;
+  army_size : int;
+  largest_army : bool;
+  road_size : int;
+  longest_road : bool
+}
+>>>>>>> 612645b139cab8dadcfa3221e49000752061ea36
 val find_player : color -> player list -> player
 >>>>>>> 612645b139cab8dadcfa3221e49000752061ea36
 val change_player_list : player list -> player -> player list

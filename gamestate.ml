@@ -176,6 +176,7 @@ let check_largest_army (state: gamestate) (changing_player: player): gamestate =
                 largest_army_claimed = true}
     else change_player state changing_player
   else {state with players = new_players}
+<<<<<<< HEAD
 
 <<<<<<< HEAD
 let rec update_largest_army (players: player list) (changing_player: player) =
@@ -208,6 +209,9 @@ let check_largest_army (state: gamestate) (changing_player: player): gamestate =
   else {state with players = new_players}
 
 =======
+>>>>>>> 612645b139cab8dadcfa3221e49000752061ea36
+=======
+
 >>>>>>> 612645b139cab8dadcfa3221e49000752061ea36
 let play_dcard (state: gamestate) (card: dcard) : gamestate =
   let player = match_color (state.playerturn) (state.players) in
