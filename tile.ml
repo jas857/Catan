@@ -39,26 +39,28 @@ let envs = [Hills;Hills;Hills;
 
 let rec make_tiles (tl:tile list) (nl:int list) (el:environment list)
  (c:tile_location)=
-  if el = [] then [] else
+  if List.length el = 0 then tl else
   let newLoc = char_of_int ((int_of_char c) +1) in
   let newC = corner newLoc in
   match (nl,el) with
-  |(n1::n2,e1::e2) ->  if e1 = Desert then
-  make_tiles ({env = Desert;
+  |(_,Desert::e2) -> make_tiles ({env = Desert;
                 collect_on = 0;
                 loc = newLoc;
                 corner = newC;
                 towns = [];
                 robber = true;
                 }::tl) nl e2 newLoc
-else make_tiles ({env = e1;
+  |(n1::n2,e1::e2) ->  make_tiles ({env = e1;
                 collect_on = n1;
                 loc = newLoc;
                 corner = newC;
                 towns = [];
                 robber = false;
                 }::tl) n2 e2 newLoc
-  |_ -> failwith "strange pattern"
+  |([],[]) -> failwith "both empty"
+  |(_,[]) -> failwith "empty env"
+  |([],_) -> failwith "empty num"
+
 
 
 let initialize_tiles () =
