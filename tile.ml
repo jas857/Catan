@@ -39,7 +39,7 @@ let envs = [Hills;Hills;Hills;
 
 let rec make_tiles (tl:tile list) (nl:int list) (el:environment list)
  (c:tile_location)=
-
+  if el = [] then [] else
   let newLoc = char_of_int ((int_of_char c) +1) in
   let newC = corner newLoc in
   match (nl,el) with
@@ -48,7 +48,7 @@ let rec make_tiles (tl:tile list) (nl:int list) (el:environment list)
                   loc = newLoc;
                   corner = newC;
                   towns = [];
-                  robber = false;
+                  robber = true;
                   }::tl) nl a newLoc
   |(n1::n2,e1::e2) ->  make_tiles ({env = e1;
                   collect_on = n1;
@@ -57,7 +57,7 @@ let rec make_tiles (tl:tile list) (nl:int list) (el:environment list)
                   towns = [];
                   robber = false;
                   }::tl) n2 e2 newLoc
-  |_ -> []
+  |_ -> failwith "strange pattern"
 
 
 let initialize_tiles () =
