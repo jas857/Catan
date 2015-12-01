@@ -3,6 +3,7 @@ open Board
 open Utilities
 open Dcard
 open Tile
+open Town
 
 (* Gamestate module. Holds information and communicates with all modules. *)
 
@@ -14,7 +15,9 @@ type gamestate = {
   playerturn : color;
   players : player list;
   game_board : board;
-  game_stage : stage
+  game_stage : stage;
+  longest_road_claimed : bool;
+  largest_army_claimed : bool
 }
 
 
@@ -75,9 +78,6 @@ let change_stage (gs:gamestate) =
   |Build -> change_turn gs
   |End -> game_complete gs
 
-(* Find the tile corresponding to coordinates *)
-let find_tile  (gs:gamestate)  (c:coordinates)=
-  failwith "todo"
 
 (* returns tile given a character location of the tile *)
 let rec get_tile (tiles:tile list) s =
@@ -144,15 +144,43 @@ let play_year_plenty
         ((get_resource plyr resource2) + 1) in
   change_player state plyr
 
-let play_road_building = failwith "TODO" (* Call Road Building Method(s) *)
+let play_road_building () = failwith "TODO" (* Call Road Building Method(s) *)
+let rec update_largest_army (players: player list) (changing_player: player) =
+  match players with
+  | [] -> []
+  | h::t -> if h.color = changing_player.color then
+              changing_player::(update_largest_army t changing_player)
+            else
+              if h.largest_army then
+                if changing_player.army_size > h.army_size then
+                  let plyr = {h with victory_points = h.victory_points - 2;
+                                     largest_army = false} in
+                  plyr::t
+                else
+                  h::t
+              else
+                h::(update_largest_army t changing_player)
 
-(* Dcard *)
+let check_largest_army (state: gamestate) (changing_player: player): gamestate =
+  let new_players = update_largest_army state.players changing_player in
+  if state.players = new_players then
+    if state.largest_army_claimed = false then
+    {state with players =
+                        (change_player_list state.players
+                          {changing_player with
+                            victory_points = changing_player.victory_points + 2;
+                            largest_army = true});
+                largest_army_claimed = true}
+    else change_player state changing_player
+  else {state with players = new_players}
+
 let play_dcard (state: gamestate) (card: dcard) : gamestate =
-  let player = find_player (state.playerturn) (state.players) in
+  let player = match_color (state.playerturn) (state.players) in
   if List.mem card player.dcards then
   let player = {player with dcards = (remove_from_list player.dcards card)} in
   (match card with
-  | Knight -> move_robber state
+  | Knight -> move_robber
+      (check_largest_army state {player with army_size = player.army_size + 1})
   | Victory_Card (name, desc) ->
        (print_endline ("You played: " ^ name ^ "- " ^ desc));
        let plyr = {player with victory_points = player.victory_points + 1} in
@@ -160,19 +188,80 @@ let play_dcard (state: gamestate) (card: dcard) : gamestate =
        change_player (state) (plyr)
   | Progress_Card p -> (match p with
                | Monopoly ->
-          let num = get_input true
-          ("Input one type of resource to take from all opponents\n
-          (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
-          play_monopoly state num
+                let num = get_input true
+                ("Input one type of resource to take from all opponents\n
+                (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
+                play_monopoly state num
                | Year_of_plenty ->
-          let num = get_input false
-          ("Input two types of resources to take with no space\n
-          (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
-          if num < 10 then play_year_plenty state 0 num
-          else play_year_plenty state ((num -(num mod 10))/10) (num mod 10)
+                let num = get_input false
+                ("Input two types of resources to take with no space\n
+                (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
+                if num < 10 then play_year_plenty state 0 num
+                else
+                  play_year_plenty state ((num -(num mod 10))/10) (num mod 10)
                | Road_Building -> failwith "TODO"(* Do road building action *)))
   else state
 
+
+(* Dcard *)
+
+(*check whether or not it is possible to build a road where specified*)
+let is_valid_build_rode (start_tile: string) (start_corner: string)
+(end_tile: string) (end_corner: string) (p : player): bool = failwith "TODO"
+
+
+
+let rec search_list (coor:coordinates) (tcoorList): bool =
+  match tcoorList with
+  | [] -> false
+  | (x,y)::t -> if ((x == coor) || (y == coor)) then true
+                else search_list coor t
+
+let rec search_towns (coor: coordinates) (towns: town list): bool =
+  match towns with
+  | [] -> false
+  | h::t -> if (coor == h.location)
+              then true
+            else search_towns coor t
+
+
+(*check whether or not it is possible to build a road where specified*)
+let is_valid_build_road (coor: coordinates) (p : player): bool =
+  (search_list coor p.roads) || (search_towns coor p.towns)
+
+
+(*
+(*modifies the gamestate to include the built road*)
+let rec build_road (state: gamestate): gamestate =
+  let _ = print_string
+  "Please enter the letter of the tile you would like to start your road on: " in
+  let input_start_tile = read_line() in
+  let _ = print_string "Please enter the number of the tile
+  corner you would like to start your road on: " in
+  let input_start_corner = read_line() in
+  let _ = print_string
+  "Please enter the letter of the tile you would like to start your road on: " in
+  let input_end_tile = read_line() in
+  let _ = print_string "Please enter the number of the tile corner you
+  would like to start your road on: " in
+  let input_end_corner = read_line() in
+  let startTileCoor = (conv input_start_tile input_start_corner) in
+        let endTileCoor = (conv input_end_tile input_end_corner) in
+        let currentPlayer = find_player playerturn state.players in
+        if((is_valid_build_road startTileCoor currentPlayer)
+          || (is_valid_build_road endTileCoor currentPlayer))
+        then
+
+
+        let updatePlayer = {currentPlayer with roads =
+        (((startTileCoor),(endTileCoor))::roads)} in
+        let updatePlayerAgain = {currentPlayer with
+        roads_left = (roads_left - 1)} in
+        let newPlayerList = change_player_list players updatePlayerAgain in
+        {gamestate with players = newPlayerList}
+  else let _ = print_string "The inputs you have entered
+   are not valid. Please try again." in build_road state
+*)
 let rec build (state: gamestate) (input:string): gamestate =
   let player = find_player (state.playerturn) (state.players) in
   (match String.lowercase input with
