@@ -16,7 +16,11 @@ let blocks_start =
     [| true; true; true; true; true;true;true; true; true; true;false;|];
     [|false; true; true; true; true;true;true; true; true; true; true;|];
     [|false;false;false; true; true;true;true; true; true; true; true;|];
+<<<<<<< HEAD
     [|false;false;false;false;false;true;true; true; true; true; true;|]
+=======
+    [|false;false;false;false;false;true;true; true; true; true; true;|];
+>>>>>>> bf640b7f8970aeb2854405dcc474ed85478cb292
     |]
 
 
