@@ -289,7 +289,7 @@ let rec build (state: gamestate) (input:string): gamestate =
   | _ -> build state input)
 
 
-let pick_dcard gs = failwith "TODO"
+let pick_dcard gs = List.hd gs.game_board.tiles
 
 let a_i_makemove gs = failwith "TODO"
 
