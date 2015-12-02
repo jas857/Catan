@@ -233,7 +233,7 @@ let rec build_road (state: gamestate): gamestate =
 
 
   let _ = print_string
-  "Please enter the letter of the tile you would like to start your road on: " in
+  "Please enter the letter of the tile you would like to end your road on: " in
   let end_tile = read_line() in
   if(String.length start_tile <> 1) then let _ =
   print_string "unacceptable input" in build_road state
@@ -241,7 +241,7 @@ let rec build_road (state: gamestate): gamestate =
 
 
   let _ = print_string "Please enter the number of the tile corner you
-  would like to start your road on: " in
+  would like to end your road on: " in
   let end_corner = read_line() in
   if(not (is_int end_corner)) then let _ =
   print_string "unacceptable input" in build_road state
