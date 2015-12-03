@@ -167,7 +167,7 @@ let rec is_overlap_road (road: coordinates * coordinates)
 
 (*says if road can be built at given coordinates*)
 let can_build_road (startTileCoor: coordinates)
-(endTileCoor: coordinates) (state: gamestate) =
+(endTileCoor: coordinates) (state: gamestate) : bool =
   let currentPlayer = match_color state.playerturn state.players in
   (((is_valid_build_road startTileCoor currentPlayer)
           || (is_valid_build_road endTileCoor currentPlayer))

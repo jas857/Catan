@@ -67,3 +67,5 @@ let rec any f l =
   match l with
       |a::b -> if f a then true else any f b
       |[] -> false
+
+let get_cmd () = String.lowercase (read_line ())

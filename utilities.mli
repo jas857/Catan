@@ -19,3 +19,5 @@ val conv : char -> int -> coordinates
 val adjacents : coordinates -> coordinates list
 
 val any : ('a -> bool) -> 'a list -> bool
+
+val get_cmd : unit -> string
