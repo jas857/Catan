@@ -62,9 +62,9 @@ let choose_next_start (gs:gamestate) =
   else
   failwith "Change_stage called at incorrect time"
 
-  (* Change the turn to the next player during play phase *)
+  (* Change the turn to the next player *)
 let change_turn (gs:gamestate) =
-  {(next_forward gs) with game_stage = Production}
+  next_forward gs
 
   (*print out victor and any other details about game over*)
 let game_complete (gs:gamestate) =
@@ -89,7 +89,7 @@ let rec get_tile (tiles:tile list) s =
 
 (* adds a new town tuple to a tile town list *)
 let add_town (gs:gamestate) (t:tile) (ci:color*int) : gamestate =
-  let newT = {t with towns = (ci::(t.towns))} in
+  let newT = {t with towns = ci::(t.towns)} in
   let temp_board = gs.game_board in
   let new_board =
   {temp_board with tiles = rebuild_tile_list temp_board.tiles newT} in
@@ -97,13 +97,13 @@ let add_town (gs:gamestate) (t:tile) (ci:color*int) : gamestate =
 
 
 (* removes robber from current location, and then places robber in new
-location given by the input string*)
-let rec move_robber (gs: gamestate): gamestate =
+location*)
+let rec move_robber (gs: gamestate) : gamestate =
   let _ = print_string
   "Please enter the letter of the tile you would like to move the robber to: " in
   let input = read_line() in
   if (Bytes.length input) > 1
-  then (let _ = print_endline "Invalid tile location" in move_robber gs )
+  then (let _ = print_endline "Invalid tile location" in move_robber gs)
   else
   let newRobLoc = get_tile (gs.game_board).tiles (Bytes.get input 0) in
   match newRobLoc with
@@ -122,8 +122,6 @@ let rec move_robber (gs: gamestate): gamestate =
 let rec change_player (state: gamestate) (plyr: player) : gamestate =
   let lst = change_player_list (state.players) (plyr) in
   {state with players = lst}
-
-
 
 let play_monopoly (state: gamestate) (resource: int) : gamestate =
   let toAdd = List.fold_left (fun acc x ->
@@ -147,7 +145,9 @@ let play_year_plenty
         ((get_resource plyr resource2) + 1) in
   change_player state plyr
 
-let play_road_building () = failwith "TODO" (* Call Road Building Method(s) *)
+let play_road_building (state:gamestate): gamestate =
+  let state = build_road state in
+  build_road state
 
 let check_largest_army (state: gamestate) (changing_player: player): gamestate =
   let new_players = update_largest_army state.players changing_player in
@@ -189,8 +189,8 @@ let play_dcard (state: gamestate) (card: dcard) : gamestate =
                 if num < 10 then play_year_plenty state 0 num
                 else
                   play_year_plenty state ((num -(num mod 10))/10) (num mod 10)
-               | Road_Building -> failwith "TODO"(* Do road building action *)))
-  else state
+               | Road_Building -> play_road_building state))
+  else (print_endline "You do not have that dcard"); state
 
 let rec search_list (coor:coordinates) (tcoorList): bool =
   match tcoorList with
@@ -233,7 +233,7 @@ let rec build_road (state: gamestate): gamestate =
 
 
   let _ = print_string
-  "Please enter the letter of the tile you would like to end your road on: " in
+  "Please enter the letter of the tile you would like to start your road on: " in
   let end_tile = read_line() in
   if(String.length start_tile <> 1) then let _ =
   print_string "unacceptable input" in build_road state
@@ -241,7 +241,7 @@ let rec build_road (state: gamestate): gamestate =
 
 
   let _ = print_string "Please enter the number of the tile corner you
-  would like to end your road on: " in
+  would like to start your road on: " in
   let end_corner = read_line() in
   if(not (is_int end_corner)) then let _ =
   print_string "unacceptable input" in build_road state
@@ -289,7 +289,7 @@ let rec build (state: gamestate) (input:string): gamestate =
   | _ -> build state input)
 
 
-let pick_dcard gs = List.hd gs.game_board.tiles
+let pick_dcard gs = failwith "TODO"
 
 let a_i_makemove gs = failwith "TODO"
 
