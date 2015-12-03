@@ -370,6 +370,9 @@ let pick_dcard gs =
 
 let trade gs = failwith "TODO"
 
+(* AI Functions *)
+
+(* Loop through tiles and record where they are in relation to current position*)
 let rec loop_tiles (tiles: tile list) (plyr: player) : unit =
     match tiles with
     | [] -> ()
@@ -396,8 +399,6 @@ let rec loop_tiles (tiles: tile list) (plyr: player) : unit =
                           let _ =(plyr.ai_vars.up <- plyr.ai_vars.up + 1) in
                           loop_tiles t plyr)
 
-
-(* AI Functions *)
 let ai_update_directions (state: gamestate) (plyr: player) : unit =
   (plyr.ai_vars.left <- 0);
   (plyr.ai_vars.right <- 0);
@@ -413,6 +414,7 @@ let can_move (state: gamestate) (coord: coordinates): bool =
 (* AI move position to build road *)
 let rec move_position (state: gamestate) (plyr: player)  : gamestate =
   let start = plyr.ai_vars.curpos in
+  let _ = ai_update_directions state plyr in
   if (fst plyr.ai_vars.curpos) mod 2 = 0 then
       if plyr.ai_vars.right > plyr.ai_vars.left then
         if plyr.ai_vars.down > plyr.ai_vars.up then
@@ -573,7 +575,6 @@ let rec move_position (state: gamestate) (plyr: player)  : gamestate =
                   let plyr = change_resource plyr 0 ((get_resource plyr 0)+1) in
                   let plyr = change_resource plyr 4 ((get_resource plyr 4)+1) in
                   change_player state plyr
-<<<<<<< HEAD
 
 let a_i_makemove (state: gamestate): gamestate =
   let player = match_color state.playerturn state.players in
@@ -587,5 +588,3 @@ let a_i_makemove (state: gamestate): gamestate =
     else
       gs
   else failwith "Build other stuff"
-=======
->>>>>>> 6f67c99b0279e298f5a06d5ba8c38fa1090ea9bc
