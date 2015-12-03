@@ -57,4 +57,4 @@ val print_player : pixboard -> player -> pixboard
 (* val print_help : stage -> unit *)
 
 (* Main REPL function that takes input and does functions *)
-(* val main_repl : gamestate -> unit *)
+(* val main_repl : gamestate -> gamestate *)

@@ -10,6 +10,14 @@ open Town
   -the exchange rate the player has
   -the player's color *)
 
+type a_i_variables = {
+  mutable curpos : coordinates;
+  mutable left : int;
+  mutable right : int;
+  mutable up : int;
+  mutable down : int
+}
+
 type player = {
   roads_left : int;
   roads : (coordinates * coordinates) list;
@@ -22,6 +30,7 @@ type player = {
   exchange : (int * int * int * int * int);
   color : color;
   a_i : bool;
+  ai_vars : a_i_variables;
   army_size : int;
   largest_army : bool;
   road_size : int;
@@ -40,7 +49,7 @@ let get_resource (plyr: player) (resource: int) : int =
   | 2, (_,_,x,_,_) -> x (* Ore *)
   | 3, (_,_,_,x,_) -> x (* Grain *)
   | 4, (_,_,_,_,x) -> x (* Lumber *)
-  | _ -> failwith "Something went wrong"
+  | _ -> failwith "Resource does not exist"
 
 let change_resource (plyr: player) (resource: int) (amt: int) : player =
   match (resource, plyr.resources) with
@@ -51,3 +60,28 @@ let change_resource (plyr: player) (resource: int) (amt: int) : player =
   | 4, (x,y,z,w,_) -> {plyr with resources = (x,y,z,w,amt)}
   | _ , _          -> failwith "Change_resource parameters not met"
 
+let rec update_largest_army (players: player list) (changing_player: player) =
+  match players with
+  | [] -> []
+  | h::t -> if h.color = changing_player.color then
+              changing_player::(update_largest_army t changing_player)
+            else
+              if h.largest_army then
+                if changing_player.army_size > h.army_size then
+                  let plyr = {h with victory_points = h.victory_points - 2;
+                                     largest_army = false} in
+                  plyr::t
+                else
+                  h::t
+              else
+                h::(update_largest_army t changing_player)
+
+let init_non_ai_player (c:color) = {roads_left = 15; roads = []; settlements_left = 5;
+  cities_left = 4; towns = []; victory_points = 0;
+  dcards = []; resources = (0,0,0,0,0); exchange = (4,4,4,4,4);
+  color = c; a_i = false; ai_vars = {curpos = (0,0); left = 0; right = 0; up = 0;
+  down = 0}; army_size = 0; largest_army = false;
+  road_size = 0; longest_road = false}
+let initialize_non_ai_players () =
+  [init_non_ai_player Red; init_non_ai_player Blue;
+  init_non_ai_player White; init_non_ai_player Orange]
