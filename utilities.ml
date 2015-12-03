@@ -30,6 +30,9 @@ let corner t =
     |'S' -> (8, 4)
     | _ -> failwith "OutOfBoundsException"
 
+let oob = [(3,0); (4,0); (4,1); (4,2); (5,0); (5,1); (5,2); (5,3); (5,4); (0,8);
+           (0,9); (0,10); (0,11); (1,10); (1,11); (2,11)]
+
 let conv t n =
     let (r,c) = corner t in
     let (x,y) = match n with
@@ -51,3 +54,16 @@ let string_to_char_list s =
 
 type color =
   | Red | Blue | White | Orange
+
+let adjacents (x,y) =
+  let adjs = if (x mod 2) = 0 then
+    [(x-1,y);(x+1,y);(x+1,y+1)]
+  else
+    [(x-1,y);(x+1,y);(x-1,y-1)] in
+  let check (x,y) = (x>=0) && (y>=0) && not (List.mem (x,y) oob) in
+  List.filter check adjs
+
+let any f l =
+  match l with
+      |a::b -> if f then true else any f b
+      |[] -> false in

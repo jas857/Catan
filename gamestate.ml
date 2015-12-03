@@ -254,8 +254,12 @@ let rec get_settlement_info () : coordinates =
   else let s_corner = int_of_string start_corner in
   (conv s_tile s_corner)
 
-let can_build_settlement (gs: gamestate)
-(coor: coordinates): bool = failwith "TODO"
+let can_build_settlement (gs: gamestate) (coor: coordinates): bool =
+  let adjs = adjacents coor in
+  let town_exists pl c = any (fun p -> any (fun t -> t.location=c) p.towns) in
+  not (any town_exists gs.players)
+
+
 
 
 let rec build_settlement (gs: gamestate) ( coor: coordinates): gamestate =
@@ -569,6 +573,7 @@ let rec move_position (state: gamestate) (plyr: player)  : gamestate =
                   let plyr = change_resource plyr 0 ((get_resource plyr 0)+1) in
                   let plyr = change_resource plyr 4 ((get_resource plyr 4)+1) in
                   change_player state plyr
+<<<<<<< HEAD
 
 let a_i_makemove (state: gamestate): gamestate =
   let player = match_color state.playerturn state.players in
@@ -582,3 +587,5 @@ let a_i_makemove (state: gamestate): gamestate =
     else
       gs
   else failwith "Build other stuff"
+=======
+>>>>>>> 6f67c99b0279e298f5a06d5ba8c38fa1090ea9bc
