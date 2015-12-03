@@ -14,6 +14,7 @@ type board = {
 
 (* Generates a new Board to be used by randomly placing tiles, and randomly
 creating a dcard list, port locations should be fixed *)
+val oob : (int*int) list
 val initialize_board : unit -> board
 
 val can_build : int -> int -> board -> bool

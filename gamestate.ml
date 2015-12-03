@@ -404,7 +404,7 @@ let ai_update_directions (state: gamestate) (plyr: player) : unit =
 
 let can_move (state: gamestate) (coord: coordinates): bool =
   (can_build_road (match_color state.playerturn state.players).ai_vars.curpos coord state)
-  (* && check if town is there or it is off board *)
+  && (*can_build coord &&*) not(List.mem coord oob)
 (* Checks if the coordinate has a road coming from curpos into it. Also checks if there is a town there. Also checks if it is off the board *)
 
 (* AI move position to build road *)
