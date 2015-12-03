@@ -82,21 +82,36 @@ let init_non_ai_player (c:color) = {roads_left = 15; roads = []; settlements_lef
   color = c; a_i = false; ai_vars = {curpos = (0,0); left = 0; right = 0; up = 0;
   down = 0}; army_size = 0; largest_army = false;
   road_size = 0; longest_road = false}
+
 let initialize_non_ai_players () =
   [init_non_ai_player Red; init_non_ai_player Blue;
   init_non_ai_player White; init_non_ai_player Orange]
 
-let corner_can_expand (coord: coordinates) : bool = failwith "TODO"
-(* If we can build roads out of this coordinate *)
+let rec is_road (road: coordinates * coordinates) (plyr:player): bool =
+  let (a,b) = road in
+  if ((List.mem road plyr.roads) || (List.mem (b,a) plyr.roads))
+  then true
+  else false
+
+let corner_can_expand (coord: coordinates) (plyr: player) : bool =
+let curpos = plyr.ai_vars.curpos in
+if (fst coord) mod 2 = 0 then
+  not(is_road (curpos, ((fst coord) + 1, snd coord)) plyr) ||
+  not(is_road (curpos, ((fst coord) - 1, snd coord)) plyr) ||
+  not(is_road (curpos, ((fst coord) + 1, (snd coord) + 1)) plyr)
+else
+  not(is_road (curpos, ((fst coord) + 1, snd coord)) plyr) ||
+  not(is_road (curpos, ((fst coord) - 1, snd coord)) plyr) ||
+  not(is_road (curpos, ((fst coord) - 1, (snd coord) - 1)) plyr)
 
 let rec curpos_change (plyr: player) : player =
   let rd = List.nth (plyr.roads) (Random.int (List.length plyr.roads)) in
-  if corner_can_expand (fst rd) then
+  if corner_can_expand (fst rd) plyr then
     let _ = plyr.ai_vars.curpos <- fst rd in
     plyr
   else
-    if corner_can_expand (snd rd) then
-      let _ =plyr.ai_vars.curpos <- snd rd in
+    if corner_can_expand (snd rd) plyr then
+      let _ = plyr.ai_vars.curpos <- snd rd in
       plyr
     else
       curpos_change plyr

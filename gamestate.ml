@@ -363,8 +363,6 @@ let pick_dcard gs =
   {gs with players = temp;game_board =
   { gs.game_board with dcards = List.tl gs.game_board.dcards}}
 
-let a_i_makemove gs = failwith "TODO"
-
 let trade gs = failwith "TODO"
 
 let rec loop_tiles (tiles: tile list) (plyr: player) : unit =
@@ -395,6 +393,9 @@ let rec loop_tiles (tiles: tile list) (plyr: player) : unit =
 
 
 (* AI Functions *)
+let a_i_makemove (state: gamestate): gamestate = failwith "TODO"
+
+
 let ai_update_directions (state: gamestate) (plyr: player) : unit =
   (plyr.ai_vars.left <- 0);
   (plyr.ai_vars.right <- 0);
