@@ -16,3 +16,4 @@ type board = {
 creating a dcard list, port locations should be fixed *)
 val initialize_board : unit -> board
 
+val can_build : int -> int -> board -> bool
