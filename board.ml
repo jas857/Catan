@@ -13,5 +13,4 @@ let initialize_board () =
     {tiles = initialize_tiles ();
      ports = ports;
      dcards = initialize_dcards ();
-     blocks = blocks_start
      }

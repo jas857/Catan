@@ -57,13 +57,13 @@ type color =
 
 let adjacents (x,y) =
   let adjs = if (x mod 2) = 0 then
-    [(x-1,y);(x+1,y);(x+1,y+1)]
+    [(x-1,y);(x+1,y);(x+1,y+1);(x,y)]
   else
-    [(x-1,y);(x+1,y);(x-1,y-1)] in
+    [(x-1,y);(x+1,y);(x-1,y-1);(x,y)] in
   let check (x,y) = (x>=0) && (y>=0) && not (List.mem (x,y) oob) in
   List.filter check adjs
 
-let any f l =
+let rec any f l =
   match l with
-      |a::b -> if f then true else any f b
-      |[] -> false in
+      |a::b -> if f a then true else any f b
+      |[] -> false
