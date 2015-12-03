@@ -295,7 +295,7 @@ let rec build (state: gamestate) (input:string): gamestate =
            (get_resource player 3) > 0
             then failwith "TODO"(* BUILD DCARD *)
             else print_endline ("Insufficient resources"); state
-  | _ -> build state input)
+  | _ -> state)
 
 let play_road_building (state:gamestate) (r1:(coordinates *coordinates))
 (r2:(coordinates * coordinates)): gamestate =

@@ -221,3 +221,116 @@ let test_gs = {playerturn=Red;
 
 let _ = print_game test_gs
 let _ = print_string [white;Bold] "This is a text prompt asking for some input.\n"
+let change_resource_for_distr (plyr: player) (resource: int) (amt: int) : player =
+  match (resource, plyr.resources) with
+  | 0, (a,x,y,z,w) -> {plyr with resources = (amt + a,x,y,z,w)}
+  | 1, (x,a,y,z,w) -> {plyr with resources = (x,amt + a,y,z,w)}
+  | 2, (x,y,a,z,w) -> {plyr with resources = (x,y,amt + a,z,w)}
+  | 3, (x,y,z,a,w) -> {plyr with resources = (x,y,z,amt + a,w)}
+  | 4, (x,y,z,w,a) -> {plyr with resources = (x,y,z,w,amt + a)}
+  | 5, (a,x,y,z,w) -> plyr
+  | _ , _          -> failwith "Change_resource parameters not met"
+
+let rec dist_resources (players:player list)
+ (towns: (color * int)) (env: int): player list =
+  match towns with
+  | [] -> players
+  |(b, a)::t -> let tempPlayer = match_color b players in
+                let newPlayers = change_player_list players
+                (change_resource_for_distr tempPlayer env a)
+                in dist_resources players t env
+
+
+let rec collect_player_resource (players: player list)
+(tiles: tile list) (roll: int): player list =
+match tiles with
+ |[] -> players
+ |h::t -> if (h.collect_on = roll)
+             then let _ = dist_resources players h.towns
+             (match h.env with
+             |Hills -> 0
+             |Pasture -> 1
+             |Mountains -> 2
+             |Fields -> 3
+             |Forest -> 4
+             |Desert -> 5) in collect_player_resource play t roll
+             else collect_player_resource play t roll
+
+let rec match_to_Dcard () =
+  let _ = print_string "Which dcard will you play?" in
+  let cmd = String.lowercase read_line() in
+  match cmd with
+  |"knight" -> Some(Knight)
+  |"monopoly" -> Some(Progress_Card(Monopoly))
+  |"year of plenty" -> Some(Progress_Card(Year_of_plenty))
+  |"road building" -> Some(Progress_Card(Road_Building))
+  |"exit" -> None
+  | _ -> let _ = print_string "cannot play this at the moment"
+  in match_to_Dcard ()
+
+
+
+
+let rec rollOrPlay (cmd: string) (gs : gamestate) : gamestate =
+  let lowercaseCmd = String.lowercase in
+  match lowercaseCmd with
+  |"roll" -> let _ = Random.self_init () in
+             let rnd = (((Random.int 6) + 2) + Random.int 6) in
+             let playersWResources =
+             collect_player_resource gs.players gs.game_board.tiles rnd in
+             change_stage {gs with players = playersWResources}
+
+  |"play" -> match (match_to_Dcard ()) with
+                | Some(x) -> let ans = play_dcard gs x in
+                              if(ans = gs)
+                                then rollOrPlay "play" gs
+                              else ans
+                | None -> gs
+
+  | _ -> gs
+
+
+let rec buildOrPlay (cmd: string) (gs : gamestate) : gamestate =
+  let lowercaseCmd = String.lowercase in
+  match lowercaseCmd with
+  |"build" -> let _ = print_string "What would you like to build?" in
+              let cmd2 = read_line() in
+              build gs cmd2
+
+  |"play" -> (match (match_to_Dcard ()) with
+                | Some(x) -> let ans = play_dcard gs x in
+                              if(ans = gs)
+                                then rollOrPlay "play" gs
+                              else ans
+                | None -> gs)
+  |"end" -> change_stage gs
+
+  | _ -> gs
+
+
+
+
+let rec main_repl (gs: gamestate) : gamestate =
+  match gamestate.game_stage with
+  | Start -> let _ = print_game gs (*prints game*) in
+             let coor = get_settlement_info in (*get settlement coordinates*)
+              (*checks if can build settlement UNIMPLENTED*)
+             if( not (can_build_settlement gs coor))
+               then let _ = print_string "invalid inputs, redo turn" in main_repl gs (*wrong input*)
+             else let gs1 = build_settlement gs coor in(*correct input*)
+             let (s, e) = get_road_info() in (*get road coordinates*)
+             if( not (can_build_road s e gs)) then
+             let _ = print_string "invalid inputs, redo turn" in main_repl gs
+             else main_repl (change_stage (build_road gs1 (s,e)))
+             (*build road then change turn*)
+  | Production -> let _ = print_string
+            "type roll or play: roll the die or play a development card" in
+            let cmd = String.lowercase read_line() in
+             main_repl (rollOrPlay cmd gs)
+  | Trade -> failwith "TODO"(*TO BE IMPLEMENTED*)
+  | Build -> let _ = print_string
+            "type build, play, or end: build something,
+             play a development card or end your turn" in
+            let cmd = String.lowercase read_line() in
+             main_repl (buildOrPlay cmd gs)
+  | End -> gs
