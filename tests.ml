@@ -10,11 +10,11 @@ open Dcard
 (*Test Tile *)
 let ranTiles = initialize_tiles ()
 
-let rec check_for_robber (tl:tile list) (b:bool) =
+let check_for_robber (tl:tile list)  =
   List.fold_left (fun a x -> (a || x.robber)) false tl
 
 TEST_UNIT = List.length ranTiles === 19
-TEST_UNIT = check_for_robber ranTiles false === true
+TEST_UNIT = check_for_robber ranTiles  === true
 
 let tempDesert = remove_robber ranTiles
 
@@ -22,7 +22,7 @@ TEST_UNIT =  tempDesert.env === Desert
 
 let newTiles = rebuild_tile_list ranTiles tempDesert
 
-TEST_UNIT = check_for_robber newTiles false === false
+TEST_UNIT = check_for_robber newTiles  === false
 
 
 
@@ -143,7 +143,7 @@ let unbox_get_tile a =
   |Some x -> x
   |None -> failwith "bad test"
 let temptiles = (buildstate.game_board).tiles
-let tileChar = char_of_int ((Random.int 19) + (int_of_char 'A'))
+let tileChar = char_of_int ((Random.int 20) + (int_of_char 'A'))
 let tileC = unbox_get_tile (get_tile temptiles tileChar)
 let curGS = add_town buildstate tileC (Red,1)
 (*Test that adding a town to a tile with no towns is done correctly *)
@@ -168,6 +168,12 @@ newTile.towns === [(Red,1) ;(Blue,1); (Red,1)]
 
 (*Tests for move_robber *)
 
+let tileChar = char_of_int ((Random.int 19) + (int_of_char 'A'))
+let newGS = move_robber buildstate tileChar
+let presumedTile = unbox_get_tile (get_tile (newGS.game_board).tiles tileChar)
+
+TEST_UNIT = check_for_robber (newGS.game_board).tiles === true
+TEST_UNIT = presumedTile.robber === true
 
 
 
