@@ -46,22 +46,27 @@ let board_start =[
 
 let board_start = List.map string_to_pix board_start
 
+(* Convert hex grid coordinates to screenspace coordinates *)
 let grid_to_board c =
   let (x,y) = c in
   (1 + 6 * (x/2) + (x mod 2) * 2, 6 + 4 * y - 2 * ((x+1)/2))
 
+(* Update a row so that the given pixel list overwrites pixels starting
+at the given index.*)
 (* Update a row one pixel at a time. *)
-let rec write_str r s str =
+let rec write_row r s str =
   if s<=0 then
     match (r,str) with
-    |(hd::tl,a::b)-> a::(write_str tl (s-1) b)
+    |(hd::tl,a::b)-> a::(write_row tl (s-1) b)
     |(_,[]) -> r
     |([],_) -> failwith "Printing outside the board"
   else
     match r with
-    |hd::tl -> hd::(write_str tl (s-1) str)
+    |hd::tl -> hd::(write_row tl (s-1) str)
     |_ -> failwith "Printing outside the board"
 
+(* Create a copy of the board where the input list is
+written horizontally starting at x,y.*)
 (* pixboard -> (int * int) -> int -> pixel -> pixboard *)
 let rec write_board pb s str =
   let (x,y) = s in
@@ -71,26 +76,31 @@ let rec write_board pb s str =
     |_ -> failwith "Printing outside the board"
   else
     match pb with
-    |row::tl -> (write_str row x str)::tl
+    |row::tl -> (write_row row x str)::tl
     |_ -> failwith "Printing outside the board"
 
+(* Create a copy of the board where the input pixel overwrites pixels
+from x,y to x+l,y *)
 let write_block pb s l p =
   let rec make_block str l p =
     if l<=0 then str else p::(make_block str (l-1) p) in
   write_board pb s (make_block [] l p)
 
-
+(* Print a single character with ANSITerminal formatting *)
 let print_pix (p:pixel) =
   let (c,s) = p in
   printf s "%c" c
 
+(* Print a list of pixels as if it were a string. *)
 let print_row (r:pixrow) =
   let _ = List.map print_pix r in
   print_newline ()
 
+(* Print a list of lists of pixels. *)
 let print_pixboard b =
   List.iter print_row b
 
+(* Create a copy of the board with the tile printed over it. *)
 let print_tile pb t =
   let (x,y) = grid_to_board t.corner in
   let bg = (match t.env with
@@ -113,7 +123,8 @@ let print_tile pb t =
   if t.robber then
     write_board pb ((x+4),(y-1)) robber
    else pb
-
+(* Print a port onto the pixboard as a 2 character symbol
+marking the type of trade available and the rate. *)
 let print_port pb (p:port) =
   let str = match p.exchange with
             |(3, 3, 3, 3, 3) -> [('R',[white]);('3',[white;on_black])]
@@ -125,12 +136,14 @@ let print_port pb (p:port) =
             |_ -> failwith "Unmatched port" in
   write_board pb p.location str
 
-
+(* Initialize a new printed board with tile info and grid.*)
 (* pixboard -> board -> pixboard *)
 let print_board pb b =
   let pb = List.fold_left print_tile pb b.tiles in
   pb (* List.fold_left print_port pb b.ports *)
 
+(* Create a copy of the board with the player's resources and trade rates
+printed in the correct place. *)
 (* pixboard -> player -> pixboard *)
 let print_resources pb (p:player) =
   (* resources start at 14 44 *)
@@ -144,7 +157,8 @@ let print_resources pb (p:player) =
   List.fold_left print_one pb resources
 
 
-(* Print a player's settlements and roads. *)
+(* Create a copy of the board with the player's roads and settlements printed
+over it. *)
 (* pixboard -> player -> pixboard *)
 let print_player pb p =
   let st = match p.color with
