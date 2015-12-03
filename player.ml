@@ -87,7 +87,7 @@ let initialize_non_ai_players () =
   [init_non_ai_player Red; init_non_ai_player Blue;
   init_non_ai_player White; init_non_ai_player Orange]
 
-let rec is_road (road: coordinates * coordinates) (plyr:player): bool =
+let is_road (road: coordinates * coordinates) (plyr:player): bool =
   let (a,b) = road in
   if ((List.mem road plyr.roads) || (List.mem (b,a) plyr.roads))
   then true
@@ -104,14 +104,16 @@ else
   not(is_road (curpos, ((fst coord) - 1, snd coord)) plyr) ||
   not(is_road (curpos, ((fst coord) - 1, (snd coord) - 1)) plyr)
 
-let rec curpos_change (plyr: player) : player =
-  let rd = List.nth (plyr.roads) (Random.int (List.length plyr.roads)) in
-  if corner_can_expand (fst rd) plyr then
-    let _ = plyr.ai_vars.curpos <- fst rd in
-    plyr
-  else
-    if corner_can_expand (snd rd) plyr then
-      let _ = plyr.ai_vars.curpos <- snd rd in
-      plyr
-    else
-      curpos_change plyr
+let rec curpos_change
+  (plyr: player) (roads: (coordinates * coordinates) list) : (bool*player) =
+  match roads with
+  | [] -> (false, plyr)
+  | h::t -> if corner_can_expand (fst h) plyr then
+              let _ = plyr.ai_vars.curpos <- fst h in
+                (true, plyr)
+            else
+              if corner_can_expand (snd h) plyr then
+                let _ = plyr.ai_vars.curpos <- snd h in
+                (true, plyr)
+              else
+                curpos_change plyr t

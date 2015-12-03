@@ -44,5 +44,5 @@ val initialize_non_ai_players : unit -> player list
 val init_non_ai_player : color -> player
 val is_road : (coordinates * coordinates) -> player -> bool
 val corner_can_expand : coordinates -> player -> bool
-val curpos_change : player -> player
+val curpos_change : player -> (coordinates * coordinates) list -> (bool* player)
 
