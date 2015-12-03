@@ -27,3 +27,5 @@ let initialize_board () =
      dcards = initialize_dcards ();
      blocks = blocks_start
      }
+
+let can_build r c b = b.blocks.(r).(c)
