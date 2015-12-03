@@ -291,9 +291,10 @@ let rec build (state: gamestate) (input:string): gamestate =
             else print_endline ("Insufficient resources"); state
   | _ -> build state input)
 
-let play_road_building (state:gamestate) : gamestate =
-  let state = build_road state in
-  build_road state
+let play_road_building (state:gamestate) (r1:(coordinates *coordinates))
+(r2:(coordinates * coordinates)): gamestate =
+  let state = build_road state r1 in
+  build_road state r2
 
 let play_monopoly (state: gamestate) (resource: int) : gamestate =
   let toAdd = List.fold_left (fun acc x ->
@@ -349,7 +350,9 @@ let play_dcard (state: gamestate) (card: dcard) : gamestate =
                 if num < 10 then play_year_plenty state 0 num
                 else
                   play_year_plenty state ((num -(num mod 10))/10) (num mod 10)
-               | Road_Building -> play_road_building state))
+               | Road_Building -> let r1 = get_road_info () in
+                                  let r2 = get_road_info () in
+                                  play_road_building state r1 r2))
 else let _ = print_endline "You do not have that dcard" in state
 
 let pick_dcard gs = failwith "TODO"
