@@ -5,6 +5,7 @@ open Tile
 open Board
 open Gamestate
 open Player
+open Town
 
 type pixel = char * style list
 
@@ -12,32 +13,35 @@ type pixrow = pixel list
 
 type pixboard = pixrow list
 
-let string_to_pix s : pixrow =
+let string_to_pix_st s st =
   let cs = string_to_char_list s in
-  List.map (fun c -> (c,[white; Bold; on_black])) cs
+  List.map (fun c -> (c,st)) cs
+
+let string_to_pix s =
+  string_to_pix_st s [white; Bold; on_black]
 
 let board_start =[
-"               X - X                                   ";
+"               X---X                                   ";
 "              /     \\                                  ";
-"         X - X   C   X - X                             ";
+"         X---X   C   X---X                             ";
 "        /     \\     /     \\                            ";
-"   X - X   B   X - X   G   X - X                       ";
+"   X---X   B   X---X   G   X---X                       ";
 "  /     \\     /     \\     /     \\                      ";
-" 0   A   X - X   F   X - X   L   X                     ";
+" 0   A   X---X   F   X---X   L   X                     ";
 "  \\     /     \\     /     \\     /        Legend        ";
-"   X - X   E   X - X   K   X - X          5 - 4        ";
+"   X---X   E   X---X   K   X---X          5---4        ";
 "  /     \\     /     \\     /     \\        /     \\       ";
-" X   D   X - X   J   X - X   P   X      0   L   3      ";
+" X   D   X---X   J   X---X   P   X      0   L   3      ";
 "  \\     /     \\     /     \\     /        \\     /       ";
-"   X - X   I   X - X   O   X - X          1 - 2        ";
+"   X---X   I   X---X   O   X---X          1---2        ";
 "  /     \\     /     \\     /     \\              Rates   ";
-" X   H   X - X   N   X - X   S   X  Brick:             ";
+" X   H   X---X   N   X---X   S   X  Brick:             ";
 "  \\     /     \\     /     \\     /   Wool:              ";
-"   X - X   M   X - X   R   X - X    Ore:               ";
+"   X---X   M   X---X   R   X---X    Ore:               ";
 "        \\     /     \\     /         Grain:             ";
-"         X - X   Q   X - X          Lumber:            ";
+"         X---X   Q   X---X          Lumber:            ";
 "              \\     /                                  ";
-"               X - X                                   "]
+"               X---X                                   "]
 
 
 let board_start = List.map string_to_pix board_start
@@ -143,25 +147,44 @@ let print_resources pb (p:player) =
 (* Print a player's settlements and roads. *)
 (* pixboard -> player -> pixboard *)
 let print_player pb p =
-  failwith "unimplemented"
-
-let rec match_color (c:color) (pl:player list) =
-  match pl with
-  |[] -> failwith "No player with that color"
-  | h::t -> if h.color = c then h else match_color c t
+  let st = match p.color with
+  | Red -> [red; Bold; on_black]
+  | Blue -> [blue; Bold; on_black]
+  | White -> [cyan; Bold; on_black]
+  | Orange -> [green; Bold; on_black] in
+  let print_town pb (t:town) =
+    let c = if t.pickup=1 then 'S' else 'C' in
+    write_board pb (grid_to_board t.location) [(c,st)] in
+  let pb = List.fold_left print_town pb p.towns in
+  let print_road pb (fst,lst) =
+    let ((x,y),(a,b))=(fst,lst) in
+    let diff = (a-x,b-y) in
+    let (dx,dy,str) = match (x mod 2, diff) with
+                |(0,(-1,0)) -> (-3,0,"---")
+                |(0,(1,0)) -> (1,-1,"/")
+                |(0,(1,1)) -> (1,1,"\\")
+                |(1,(-1,0)) -> (-1,1,"/")
+                |(1,(1,0)) -> (1,0,"---")
+                |(1,(-1,-1)) -> (-1,-1,"\\")
+                |(_,(_,_)) -> failwith "Malformed road" in
+    let (r,c) = grid_to_board fst in
+    let (r,c) = (r+dx,c+dy) in
+    write_board pb (r,c) (string_to_pix_st str st) in
+  List.fold_left print_road pb p.roads
 
 let print_game gs =
   let pb = board_start in
   let pb = print_board pb gs.game_board in
   let pb = print_resources pb (match_color gs.playerturn gs.players) in
+  let pb = List.fold_left print_player pb gs.players in
   print_pixboard pb
 
 let player1 = {
   roads_left=3;
-  roads=[];
+  roads=[((2,2),(3,3));((3,3),(4,3));((4,3),(5,3))];
   settlements_left=3;
   cities_left=3;
-  towns=[];
+  towns=[{location=(2,2);pickup=1};{location=(7,3);pickup=2}];
   victory_points=0;
   dcards=[];
   resources = (2,3,4,5,6);
@@ -183,3 +206,4 @@ let test_gs = {playerturn=Red;
                largest_army_claimed=false}
 
 let _ = print_game test_gs
+let _ = print_string [white;Bold] "This is a text prompt asking for some input.\n"

@@ -46,3 +46,5 @@ val trade : gamestate -> gamestate
 val a_i_makemove : gamestate -> gamestate
 
 val change_player : gamestate -> player -> gamestate
+
+val match_color : color -> player list -> player
