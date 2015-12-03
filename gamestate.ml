@@ -355,9 +355,13 @@ let play_dcard (state: gamestate) (card: dcard) : gamestate =
                                   play_road_building state r1 r2))
 else let _ = print_endline "You do not have that dcard" in state
 
-let pick_dcard gs = failwith "TODO"
-
-let a_i_makemove gs = failwith "TODO"
+let pick_dcard gs =
+  let tempPlayer = match_color gs.playerturn gs.players in
+  let temp = change_player_list gs.players
+  {tempPlayer with dcards =
+  (List.hd gs.game_board.dcards)::(tempPlayer.dcards)} in
+  {gs with players = temp;game_board =
+  { gs.game_board with dcards = List.tl gs.game_board.dcards}}
 
 let trade gs = failwith "TODO"
 
@@ -387,9 +391,135 @@ let rec loop_tiles (tiles: tile list) (plyr: player) : unit =
                           let _ =(plyr.ai_vars.up <- plyr.ai_vars.up + 1) in
                           loop_tiles t plyr)
 
+
+(* AI Functions *)
+let a_i_makemove (state: gamestate): gamestate = failwith "TODO"
+
+
 let ai_update_directions (state: gamestate) (plyr: player) : unit =
   (plyr.ai_vars.left <- 0);
   (plyr.ai_vars.right <- 0);
   (plyr.ai_vars.up <- 0);
   (plyr.ai_vars.down <- 0);
   loop_tiles state.game_board.tiles plyr
+
+let can_move (state: gamestate) (coord: coordinates): bool =
+  (can_build_road (match_color state.playerturn state.players).ai_vars.curpos coord state)
+  && (*can_build coord &&*) not(List.mem coord oob)
+(* Checks if the coordinate has a road coming from curpos into it. Also checks if there is a town there. Also checks if it is off the board *)
+
+(* AI move position to build road *)
+let rec move_position (state: gamestate) (plyr: player) : gamestate =
+  let start = plyr.ai_vars.curpos in
+  if (fst plyr.ai_vars.curpos) mod 2 = 0 then
+      if plyr.ai_vars.right > plyr.ai_vars.left then
+        if plyr.ai_vars.down > plyr.ai_vars.up then
+          if can_move state (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos) + 1) then
+              (* +X, +Y *)
+              let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos) + 1) in
+              build_road state (start,endpt)
+          else
+            if can_move state (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) then
+              (* +X *)
+              let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) in
+              build_road state (start,endpt)
+            else
+              if can_move state (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) then
+                (* -X *)
+                let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) in
+                  build_road state (start,endpt)
+              else
+                let plyr = curpos_change plyr in
+                move_position (change_player state plyr) plyr
+        else
+          if can_move state (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) then
+            (* +X *)
+            let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) in
+              build_road state (start,endpt)
+          else
+            if can_move state (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos) + 1) then
+              (* +X, +Y *)
+              let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos) + 1) in
+              build_road state (start,endpt)
+            else
+              if can_move state (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) then
+              (* -X *)
+              let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) in
+                  build_road state (start,endpt)
+              else
+                let plyr = curpos_change plyr in
+                  move_position (change_player state plyr) plyr
+      else
+        if can_move state (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) then
+          (* -X *)
+          let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) in
+                  build_road state (start,endpt)
+        else
+          if can_move state (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) then
+            (* +X *)
+            let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) in
+              build_road state (start,endpt)
+          else
+            if can_move state (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos) + 1) then
+              (* +X, +Y *)
+              let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos) + 1) in
+              build_road state (start,endpt)
+            else
+               let plyr = curpos_change plyr in
+                move_position (change_player state plyr) plyr
+  else
+    if plyr.ai_vars.right < plyr.ai_vars.left then
+        if plyr.ai_vars.down > plyr.ai_vars.up then
+          if can_move state (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) then
+              (* -X *)
+                let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) in
+                  build_road state (start,endpt)
+          else
+            if can_move state (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) then
+              (* +X *)
+                let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) in
+                  build_road state (start,endpt)
+            else
+              if can_move state (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos) - 1) then
+                (* -X, -Y *)
+                let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos) - 1) in
+                  build_road state (start,endpt)
+              else
+                let plyr = curpos_change plyr in
+                move_position (change_player state plyr) plyr
+        else
+          if can_move state (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos) - 1) then
+            (* -X, -Y *)
+                let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos) - 1) in
+                  build_road state (start,endpt)
+          else
+            if can_move state (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) then
+              (* -X *)
+                let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) in
+                  build_road state (start,endpt)
+            else
+              if can_move state (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) then
+              (* +X *)
+              let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) in
+              build_road state (start,endpt)
+              else
+                let plyr = curpos_change plyr in
+                  move_position (change_player state plyr) plyr
+      else
+        if can_move state (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) then
+          (* -X *)
+          let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) in
+                  build_road state (start,endpt)
+        else
+          if can_move state (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) then
+            (* +X *)
+            let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) in
+              build_road state (start,endpt)
+          else
+            if can_move state (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos) - 1) then
+            (* -X, -Y *)
+                let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos) - 1) in
+                  build_road state (start,endpt)
+          else
+               let plyr = curpos_change plyr in
+                move_position (change_player state plyr) plyr
