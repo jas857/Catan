@@ -109,7 +109,7 @@ let rec move_robber (gs: gamestate) (c:tile_location): gamestate =
   match newRobLoc with
   |None -> let _ = print_endline "Invalid tile location"  in gs
   |Some loc ->
-    let nrl = loc in
+    let nrl = {loc with robber =true} in
     let gboard = gs.game_board in
     let robberless =
     rebuild_tile_list gboard.tiles (remove_robber gboard.tiles) in
@@ -122,9 +122,6 @@ let rec move_robber (gs: gamestate) (c:tile_location): gamestate =
 let rec change_player (state: gamestate) (plyr: player) : gamestate =
   let lst = change_player_list (state.players) (plyr) in
   {state with players = lst}
-
-
-
 
 
 let check_largest_army (state: gamestate) (changing_player: player): gamestate =
@@ -168,66 +165,109 @@ let rec is_overlap_road (road: coordinates * coordinates)
         then true
         else is_overlap_road road t
 
+(*says if road can be built at given coordinates*)
 let can_build_road (startTileCoor: coordinates)
 (endTileCoor: coordinates) (state: gamestate) =
   let currentPlayer = match_color state.playerturn state.players in
   (((is_valid_build_road startTileCoor currentPlayer)
           || (is_valid_build_road endTileCoor currentPlayer))
         && not (is_overlap_road (startTileCoor, endTileCoor) state.players))
+
 let is_int s =
   try ignore (int_of_string s); true
   with _ -> false
 
 (*modifies the gamestate to include the built road*)
-let rec build_road (state: gamestate): gamestate =
+
+let rec get_road_info () :(coordinates * coordinates) =
   let _ = print_string
   "Please enter the letter of the tile you would like to start your road on: " in
   let start_tile = read_line() in
   if(String.length start_tile <> 1) then let _ =
-  print_string "unacceptable input" in build_road state
+  print_string "unacceptable input" in get_road_info ()
   else let s_tile = start_tile.[0] in
-
 
   let _ = print_string "Please enter the number of the tile
   corner you would like to start your road on: " in
   let start_corner = read_line() in
   if(not (is_int start_corner)) then let _ =
-  print_string "unacceptable input" in build_road state
+  print_string "unacceptable input" in get_road_info ()
   else let s_corner = int_of_string start_corner in
 
-
   let _ = print_string
-  "Please enter the letter of the tile you would like to start your road on: " in
+  "Please enter the letter of the tile you would like to end your road on: " in
   let end_tile = read_line() in
   if(String.length start_tile <> 1) then let _ =
-  print_string "unacceptable input" in build_road state
+  print_string "unacceptable input" in get_road_info ()
   else let e_tile = end_tile.[0] in
 
-
   let _ = print_string "Please enter the number of the tile corner you
-  would like to start your road on: " in
+  would like to end your road on: " in
   let end_corner = read_line() in
   if(not (is_int end_corner)) then let _ =
-  print_string "unacceptable input" in build_road state
+  print_string "unacceptable input" in get_road_info ()
   else let e_corner = int_of_string end_corner in
 
-
-
   let startTileCoor = (conv s_tile s_corner) in
-        let endTileCoor = (conv e_tile e_corner) in
-        let currentPlayer = match_color state.playerturn state.players in
-        if(can_build_road startTileCoor endTileCoor state)
-        then
-        let updatePlayer = {currentPlayer with roads =
-        (((startTileCoor),(endTileCoor))::(currentPlayer.roads))} in
-        let updatePlayerAgain = {updatePlayer with
-        roads_left = (updatePlayer.roads_left - 1)} in
-        let newPlayerList = change_player_list state.players updatePlayerAgain in
-        {state with players = newPlayerList}
+  let endTileCoor = (conv e_tile e_corner) in
+  (startTileCoor, endTileCoor)
+
+(*builds the actual road in game state*)
+let rec build_road (state: gamestate)
+(coor: (coordinates * coordinates)): gamestate =
+  let (startTileCoor, endTileCoor) = coor in
+  let currentPlayer = match_color state.playerturn state.players in
+  let updatePlayer = {currentPlayer with roads =
+  (((startTileCoor),(endTileCoor))::(currentPlayer.roads))} in
+  let updatePlayerAgain = {updatePlayer with
+  roads_left = (updatePlayer.roads_left - 1)} in
+  let newPlayerList = change_player_list state.players updatePlayerAgain in
+  {state with players = newPlayerList}
 
 
-  else let _ = print_string "The inputs you have entered
-   are not valid. Please try again." in build_road state
+(*if the tile contains the town then add to the towns list of the tile*)
+let rec settlement_helper (tiles: tile list)
+ (coor: coordinates) (clr: color) : tile list =
+  match tiles with
+  | [] -> []
+  | h::t -> if(((conv h.loc 0) = coor) ||
+    ((conv h.loc 1) = coor) || ((conv h.loc 2) = coor) ||
+    ((conv h.loc 3) = coor) || ((conv h.loc 4) = coor) ||
+    ((conv h.loc 5) = coor))
+  then {h with towns = (clr, 1)::(h.towns)}::(settlement_helper t coor clr)
+  else h::(settlement_helper t coor clr)
+
+let rec get_settlement_info () : coordinates =
+  let _ = print_string
+  "Please enter the letter of the tile
+  you would like to build your settlement on: " in
+  let start_tile = read_line() in
+  if(String.length start_tile <> 1) then let _ =
+  print_string "unacceptable input" in get_settlement_info ()
+  else let s_tile = start_tile.[0] in
+
+  let _ = print_string "Please enter the number of the tile
+  corner you would like to build your settlement on: " in
+  let start_corner = read_line() in
+  if(not (is_int start_corner)) then let _ =
+  print_string "unacceptable input" in get_settlement_info ()
+  else let s_corner = int_of_string start_corner in
+  (conv s_tile s_corner)
+
+let can_build_settlement (gs: gamestate)
+(coor: coordinates): bool = failwith "TODO"
+
+
+let rec build_settlement (gs: gamestate) ( coor: coordinates): gamestate =
+  let currentPlayer = match_color gs.playerturn gs.players in
+  let updatedPlayer = {currentPlayer with
+  settlements_left = currentPlayer.settlements_left - 1;
+  towns = {location = coor; pickup = 1}::(currentPlayer.towns)} in
+  let newPlayerList = change_player_list gs.players updatedPlayer in
+  let updatedBoard =
+  {gs.game_board with tiles =
+  settlement_helper gs.game_board.tiles coor currentPlayer.color} in
+  {gs with players = newPlayerList; game_board = updatedBoard}
 let rec build (state: gamestate) (input:string): gamestate =
   let player = match_color (state.playerturn) (state.players) in
   (match String.lowercase input with
@@ -251,9 +291,10 @@ let rec build (state: gamestate) (input:string): gamestate =
             else print_endline ("Insufficient resources"); state
   | _ -> build state input)
 
-let play_road_building (state:gamestate) : gamestate =
-  let state = build_road state in
-  build_road state
+let play_road_building (state:gamestate) (r1:(coordinates *coordinates))
+(r2:(coordinates * coordinates)): gamestate =
+  let state = build_road state r1 in
+  build_road state r2
 
 let play_monopoly (state: gamestate) (resource: int) : gamestate =
   let toAdd = List.fold_left (fun acc x ->
@@ -309,10 +350,18 @@ let play_dcard (state: gamestate) (card: dcard) : gamestate =
                 if num < 10 then play_year_plenty state 0 num
                 else
                   play_year_plenty state ((num -(num mod 10))/10) (num mod 10)
-               | Road_Building -> play_road_building state))
+               | Road_Building -> let r1 = get_road_info () in
+                                  let r2 = get_road_info () in
+                                  play_road_building state r1 r2))
 else let _ = print_endline "You do not have that dcard" in state
 
-let pick_dcard gs = failwith "TODO"
+let pick_dcard gs =
+  let tempPlayer = match_color gs.playerturn gs.players in
+  let temp = change_player_list gs.players
+  {tempPlayer with dcards =
+  (List.hd gs.game_board.dcards)::(tempPlayer.dcards)} in
+  {gs with players = temp;game_board =
+  { gs.game_board with dcards = List.tl gs.game_board.dcards}}
 
 let a_i_makemove gs = failwith "TODO"
 
@@ -344,9 +393,132 @@ let rec loop_tiles (tiles: tile list) (plyr: player) : unit =
                           let _ =(plyr.ai_vars.up <- plyr.ai_vars.up + 1) in
                           loop_tiles t plyr)
 
+
+(* AI Functions *)
 let ai_update_directions (state: gamestate) (plyr: player) : unit =
   (plyr.ai_vars.left <- 0);
   (plyr.ai_vars.right <- 0);
   (plyr.ai_vars.up <- 0);
   (plyr.ai_vars.down <- 0);
   loop_tiles state.game_board.tiles plyr
+
+let can_move (state: gamestate) (coord: coordinates): bool =
+  (can_build_road (match_color state.playerturn state.players).ai_vars.curpos coord state)
+  (* && check if town is there or it is off board *)
+(* Checks if the coordinate has a road coming from curpos into it. Also checks if there is a town there. Also checks if it is off the board *)
+
+(* AI move position to build road *)
+let rec move_position (state: gamestate) (plyr: player) : gamestate =
+  let start = plyr.ai_vars.curpos in
+  if (fst plyr.ai_vars.curpos) mod 2 = 0 then
+      if plyr.ai_vars.right > plyr.ai_vars.left then
+        if plyr.ai_vars.down > plyr.ai_vars.up then
+          if can_move state (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos) + 1) then
+              (* +X, +Y *)
+              let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos) + 1) in
+              build_road state (start,endpt)
+          else
+            if can_move state (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) then
+              (* +X *)
+              let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) in
+              build_road state (start,endpt)
+            else
+              if can_move state (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) then
+                (* -X *)
+                let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) in
+                  build_road state (start,endpt)
+              else
+                let plyr = curpos_change plyr in
+                move_position (change_player state plyr) plyr
+        else
+          if can_move state (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) then
+            (* +X *)
+            let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) in
+              build_road state (start,endpt)
+          else
+            if can_move state (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos) + 1) then
+              (* +X, +Y *)
+              let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos) + 1) in
+              build_road state (start,endpt)
+            else
+              if can_move state (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) then
+              (* -X *)
+              let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) in
+                  build_road state (start,endpt)
+              else
+                let plyr = curpos_change plyr in
+                  move_position (change_player state plyr) plyr
+      else
+        if can_move state (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) then
+          (* -X *)
+          let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) in
+                  build_road state (start,endpt)
+        else
+          if can_move state (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) then
+            (* +X *)
+            let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) in
+              build_road state (start,endpt)
+          else
+            if can_move state (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos) + 1) then
+              (* +X, +Y *)
+              let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos) + 1) in
+              build_road state (start,endpt)
+            else
+               let plyr = curpos_change plyr in
+                move_position (change_player state plyr) plyr
+  else
+    if plyr.ai_vars.right < plyr.ai_vars.left then
+        if plyr.ai_vars.down > plyr.ai_vars.up then
+          if can_move state (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) then
+              (* -X *)
+                let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) in
+                  build_road state (start,endpt)
+          else
+            if can_move state (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) then
+              (* +X *)
+                let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) in
+                  build_road state (start,endpt)
+            else
+              if can_move state (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos) - 1) then
+                (* -X, -Y *)
+                let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos) - 1) in
+                  build_road state (start,endpt)
+              else
+                let plyr = curpos_change plyr in
+                move_position (change_player state plyr) plyr
+        else
+          if can_move state (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos) - 1) then
+            (* -X, -Y *)
+                let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos) - 1) in
+                  build_road state (start,endpt)
+          else
+            if can_move state (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) then
+              (* -X *)
+                let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) in
+                  build_road state (start,endpt)
+            else
+              if can_move state (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) then
+              (* +X *)
+              let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) in
+              build_road state (start,endpt)
+              else
+                let plyr = curpos_change plyr in
+                  move_position (change_player state plyr) plyr
+      else
+        if can_move state (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) then
+          (* -X *)
+          let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) in
+                  build_road state (start,endpt)
+        else
+          if can_move state (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) then
+            (* +X *)
+            let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) in
+              build_road state (start,endpt)
+          else
+            if can_move state (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos) - 1) then
+            (* -X, -Y *)
+                let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos) - 1) in
+                  build_road state (start,endpt)
+          else
+               let plyr = curpos_change plyr in
+                move_position (change_player state plyr) plyr

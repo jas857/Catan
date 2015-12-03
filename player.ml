@@ -85,3 +85,18 @@ let init_non_ai_player (c:color) = {roads_left = 15; roads = []; settlements_lef
 let initialize_non_ai_players () =
   [init_non_ai_player Red; init_non_ai_player Blue;
   init_non_ai_player White; init_non_ai_player Orange]
+
+let corner_can_expand (coord: coordinates) : bool = failwith "TODO"
+(* If we can build roads out of this coordinate *)
+
+let rec curpos_change (plyr: player) : player =
+  let rd = List.nth (plyr.roads) (Random.int (List.length plyr.roads)) in
+  if corner_can_expand (fst rd) then
+    let _ = plyr.ai_vars.curpos <- fst rd in
+    plyr
+  else
+    if corner_can_expand (snd rd) then
+      let _ =plyr.ai_vars.curpos <- snd rd in
+      plyr
+    else
+      curpos_change plyr

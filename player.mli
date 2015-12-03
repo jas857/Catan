@@ -40,3 +40,6 @@ val change_player_list : player list -> player -> player list
 val get_resource : player -> int -> int
 val change_resource : player -> int -> int -> player
 val update_largest_army : player list -> player -> player list
+val initialize_non_ai_players : unit -> player list
+val init_non_ai_player : color -> player
+val curpos_change : player -> player
