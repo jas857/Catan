@@ -260,7 +260,10 @@ let can_build_settlement (gs: gamestate) (coor: coordinates): bool =
     any (fun t -> List.mem t.location adjs) pl.towns in
   not (any blocks_build gs.players)
 
-
+let location_empty (gs: gamestate) (coor: coordinates) : bool =
+  let town_on_loc (plyr: player) =
+    any (fun t -> t.location = coor) plyr.towns in
+  not (any town_on_loc gs.players)
 
 
 let rec build_settlement (gs: gamestate) ( coor: coordinates): gamestate =
@@ -409,7 +412,7 @@ let ai_update_directions (state: gamestate) (plyr: player) : unit =
 
 let can_move (state: gamestate) (coord: coordinates): bool =
   (can_build_road (match_color state.playerturn state.players).ai_vars.curpos coord state)
-  && (*can_build coord &&*) not(List.mem coord oob)
+  && location_empty state coord && not(List.mem coord oob)
 (* Checks if the coordinate has a road coming from curpos into it. Also checks if there is a town there. Also checks if it is off the board *)
 
 (* AI move position to build road *)
