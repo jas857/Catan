@@ -317,3 +317,36 @@ let pick_dcard gs = failwith "TODO"
 let a_i_makemove gs = failwith "TODO"
 
 let trade gs = failwith "TODO"
+
+let rec loop_tiles (tiles: tile list) (plyr: player) : unit =
+    match tiles with
+    | [] -> ()
+    | h::t -> if List.length h.towns = 3 then ()
+               else
+                (if h.collect_on <= 4 || h.collect_on >= 10 then ()
+                    else
+                      if ((fst h.corner) < (fst plyr.ai_vars.curpos)) then
+                        if ((snd h.corner) < (snd plyr.ai_vars.curpos)) then
+                          let _ =(plyr.ai_vars.left <- plyr.ai_vars.left + 1) in
+                          let _ =(plyr.ai_vars.down <- plyr.ai_vars.down + 1) in
+                          loop_tiles t plyr
+                        else
+                          let _ =(plyr.ai_vars.left <- plyr.ai_vars.left + 1) in
+                          let _ =(plyr.ai_vars.up <- plyr.ai_vars.up + 1) in
+                          loop_tiles t plyr
+                      else
+                        if ((snd h.corner) < (snd plyr.ai_vars.curpos)) then
+                          let _ =(plyr.ai_vars.right <- plyr.ai_vars.right + 1) in
+                          let _ =(plyr.ai_vars.down <- plyr.ai_vars.down + 1) in
+                          loop_tiles t plyr
+                        else
+                          let _ =(plyr.ai_vars.right <- plyr.ai_vars.right + 1) in
+                          let _ =(plyr.ai_vars.up <- plyr.ai_vars.up + 1) in
+                          loop_tiles t plyr)
+
+let ai_update_directions (state: gamestate) (plyr: player) : unit =
+  (plyr.ai_vars.left <- 0);
+  (plyr.ai_vars.right <- 0);
+  (plyr.ai_vars.up <- 0);
+  (plyr.ai_vars.down <- 0);
+  loop_tiles state.game_board.tiles plyr

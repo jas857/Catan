@@ -9,6 +9,13 @@ open Town
 	-the player's inventory
 	-the exchange rate the player has
 	-the player's color *)
+type a_i_variables = {
+  mutable curpos : coordinates;
+  mutable left : int;
+  mutable right : int;
+  mutable up : int;
+  mutable down : int
+}
 
 type player = {
   roads_left : int;
@@ -27,13 +34,6 @@ type player = {
   largest_army : bool;
   road_size : int;
   longest_road : bool
-}
-
-type a_i_variables = {
-	mutable left : int;
-	mutable right : int;
-	mutable up : int;
-	mutable down : int
 }
 
 val change_player_list : player list -> player -> player list
