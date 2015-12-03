@@ -355,7 +355,13 @@ let play_dcard (state: gamestate) (card: dcard) : gamestate =
                                   play_road_building state r1 r2))
 else let _ = print_endline "You do not have that dcard" in state
 
-let pick_dcard gs = failwith "TODO"
+let pick_dcard gs =
+  let tempPlayer = match_color gs.playerturn gs.players in
+  let temp = change_player_list gs.players
+  {tempPlayer with dcards =
+  (List.hd gs.game_board.dcards)::(tempPlayer.dcards)} in
+  {gs with players = temp;game_board =
+  { gs.game_board with dcards = List.tl gs.game_board.dcards}}
 
 let a_i_makemove gs = failwith "TODO"
 
