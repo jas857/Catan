@@ -394,12 +394,6 @@ let rec loop_tiles (tiles: tile list) (plyr: player) : unit =
 
 
 (* AI Functions *)
-let a_i_makemove (state: gamestate): gamestate =
-  let player = match_color state.playerturn state.players in
-  if (get_resource player 0) > 0 && (get_resource player 4) > 0 then
-
-
-
 let ai_update_directions (state: gamestate) (plyr: player) : unit =
   (plyr.ai_vars.left <- 0);
   (plyr.ai_vars.right <- 0);
@@ -433,7 +427,7 @@ let rec move_position (state: gamestate) (plyr: player)  : gamestate =
                 let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) in
                   build_road state (start,endpt)
               else
-                let (truefalse, plyr) = curpos_change plyr in
+                let (truefalse, plyr) = curpos_change plyr.roads plyr in
                 (* If there are places to put roads, then place it *)
                 if truefalse then
                   move_position (change_player state plyr) plyr
@@ -459,7 +453,7 @@ let rec move_position (state: gamestate) (plyr: player)  : gamestate =
               let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) in
                   build_road state (start,endpt)
               else
-                let (truefalse, plyr) = curpos_change plyr in
+                let (truefalse, plyr) = curpos_change plyr.roads plyr in
                 (* If there are places to put roads, then place it *)
                 if truefalse then
                   move_position (change_player state plyr) plyr
@@ -485,7 +479,7 @@ let rec move_position (state: gamestate) (plyr: player)  : gamestate =
               let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos) + 1) in
               build_road state (start,endpt)
             else
-               let (truefalse, plyr) = curpos_change plyr in
+               let (truefalse, plyr) = curpos_change plyr.roads plyr in
                 (* If there are places to put roads, then place it *)
                 if truefalse then
                   move_position (change_player state plyr) plyr
@@ -513,7 +507,7 @@ let rec move_position (state: gamestate) (plyr: player)  : gamestate =
                 let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos) - 1) in
                   build_road state (start,endpt)
               else
-                let (truefalse, plyr) = curpos_change plyr in
+                let (truefalse, plyr) = curpos_change plyr.roads plyr in
                 (* If there are places to put roads, then place it *)
                 if truefalse then
                   move_position (change_player state plyr) plyr
@@ -539,7 +533,7 @@ let rec move_position (state: gamestate) (plyr: player)  : gamestate =
               let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) in
               build_road state (start,endpt)
               else
-                let (truefalse, plyr) = curpos_change plyr in
+                let (truefalse, plyr) = curpos_change plyr.roads plyr in
                 (* If there are places to put roads, then place it *)
                 if truefalse then
                   move_position (change_player state plyr) plyr
@@ -565,7 +559,7 @@ let rec move_position (state: gamestate) (plyr: player)  : gamestate =
                 let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos) - 1) in
                   build_road state (start,endpt)
           else
-               let (truefalse, plyr) = curpos_change plyr in
+               let (truefalse, plyr) = curpos_change plyr.roads plyr in
                 (* If there are places to put roads, then place it *)
                 if truefalse then
                   move_position (change_player state plyr) plyr
@@ -575,3 +569,16 @@ let rec move_position (state: gamestate) (plyr: player)  : gamestate =
                   let plyr = change_resource plyr 0 ((get_resource plyr 0)+1) in
                   let plyr = change_resource plyr 4 ((get_resource plyr 4)+1) in
                   change_player state plyr
+
+let a_i_makemove (state: gamestate): gamestate =
+  let player = match_color state.playerturn state.players in
+  if (get_resource player 0) > 0 && (get_resource player 4) > 0 then
+    let player = change_resource player 0 ((get_resource player 0) - 1) in
+    let player = change_resource player 4 ((get_resource player 4) - 1) in
+    let gs = move_position state player in
+    let plyr = match_color gs.playerturn gs.players in
+    if (get_resource player 0) = (get_resource plyr 0) then
+      failwith "Build other stuff"
+    else
+      gs
+  else failwith "Build other stuff"
