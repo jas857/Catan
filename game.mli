@@ -1,4 +1,4 @@
-open Gamestate *)
+open Gamestate
 open ANSITerminal
 open Utilities
 open Port
@@ -34,21 +34,22 @@ val print_row : pixrow -> unit
 (* Print a list of lists of pixels. *)
 val print_pixboard : pixboard -> unit
 
-val print_port : pixboard -> port -> pixboard
-
-(* Initialize a new printed board with tile info and grid.*)
-val print_board : pixboard -> board -> pixboard
 
 (* Create a copy of the board with the tile printed over it. *)
-val print_tile : pixboard -> tile -> pixboard
+(* val print_tile : pixboard -> tile -> pixboard *)
+
+(* Initialize a new printed board with tile info and grid.*)
+(* val print_board : pixboard -> board -> pixboard *)
+
+(* val print_port : pixboard -> port -> pixboard *)
 
 (* Create a copy of the board with the player's resources and trade rates
 printed in the correct place. *)
-val print_resources : pixboard -> player -> pixboard
+(* val print_resources : pixboard -> player -> pixboard *)
 
 (* Create a copy of the board with the player's roads and settlements printed
 over it. *)
-val print_player : pixboard -> player -> pixboard
+(* val print_player : pixboard -> player -> pixboard *)
 
 (* Print out the player's development cards given the color of the player*)
 (* val print_dcards : color -> unit *)
