@@ -254,8 +254,12 @@ let rec get_settlement_info () : coordinates =
   else let s_corner = int_of_string start_corner in
   (conv s_tile s_corner)
 
-let can_build_settlement (gs: gamestate)
-(coor: coordinates): bool = failwith "TODO"
+let can_build_settlement (gs: gamestate) (coor: coordinates): bool =
+  let adjs = adjacents coor in
+  let town_exists pl c = any (fun p -> any (fun t -> t.location=c) p.towns) in
+  not (any town_exists gs.players)
+
+
 
 
 let rec build_settlement (gs: gamestate) ( coor: coordinates): gamestate =
