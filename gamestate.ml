@@ -62,9 +62,9 @@ let choose_next_start (gs:gamestate) =
   else
   failwith "Change_stage called at incorrect time"
 
-  (* Change the turn to the next player *)
+  (* Change the turn to the next player during play phase *)
 let change_turn (gs:gamestate) =
-  next_forward gs
+  {(next_forward gs) with game_stage = Production}
 
   (*print out victor and any other details about game over*)
 let game_complete (gs:gamestate) =
@@ -89,7 +89,7 @@ let rec get_tile (tiles:tile list) s =
 
 (* adds a new town tuple to a tile town list *)
 let add_town (gs:gamestate) (t:tile) (ci:color*int) : gamestate =
-  let newT = {t with towns = ci::(t.towns)} in
+  let newT = {t with towns = (ci::(t.towns))} in
   let temp_board = gs.game_board in
   let new_board =
   {temp_board with tiles = rebuild_tile_list temp_board.tiles newT} in
@@ -97,17 +97,17 @@ let add_town (gs:gamestate) (t:tile) (ci:color*int) : gamestate =
 
 
 (* removes robber from current location, and then places robber in new
-location*)
-let rec move_robber (gs: gamestate) : gamestate =
-  let _ = print_string
+location given by the input string*)
+let rec move_robber (gs: gamestate) (c:tile_location): gamestate =
+  (* let _ = print_string
   "Please enter the letter of the tile you would like to move the robber to: " in
   let input = read_line() in
   if (Bytes.length input) > 1
-  then (let _ = print_endline "Invalid tile location" in move_robber gs)
-  else
-  let newRobLoc = get_tile (gs.game_board).tiles (Bytes.get input 0) in
+  then (let _ = print_endline "Invalid tile location" in move_robber gs )
+  else *)
+  let newRobLoc = get_tile (gs.game_board).tiles c in
   match newRobLoc with
-  |None -> let _ = print_endline "Invalid tile location" in move_robber gs
+  |None -> let _ = print_endline "Invalid tile location"  in gs
   |Some loc ->
     let nrl = loc in
     let gboard = gs.game_board in
@@ -123,31 +123,9 @@ let rec change_player (state: gamestate) (plyr: player) : gamestate =
   let lst = change_player_list (state.players) (plyr) in
   {state with players = lst}
 
-let play_monopoly (state: gamestate) (resource: int) : gamestate =
-  let toAdd = List.fold_left (fun acc x ->
-                  if x.color = state.playerturn
-                  then acc
-                  else acc + (get_resource x resource))
-              0 state.players in
-  let plyrs = List.map (fun x ->
-              if x.color = state.playerturn
-              then change_resource x resource
-                (toAdd +(get_resource x resource))
-              else change_resource x resource 0) (state.players) in
-  {state with players = plyrs}
 
-let play_year_plenty
-  (state: gamestate) (resource1: int) (resource2: int) : gamestate =
-  let plyr = match_color (state.playerturn) (state.players) in
-  let plyr = change_resource plyr resource1
-        ((get_resource plyr resource1) + 1) in
-  let plyr = change_resource plyr resource2
-        ((get_resource plyr resource2) + 1) in
-  change_player state plyr
 
-let play_road_building (state:gamestate): gamestate =
-  let state = build_road state in
-  build_road state
+
 
 let check_largest_army (state: gamestate) (changing_player: player): gamestate =
   let new_players = update_largest_army state.players changing_player in
@@ -164,34 +142,6 @@ let check_largest_army (state: gamestate) (changing_player: player): gamestate =
     else change_player state changing_player
   else {state with players = new_players}
 
-let play_dcard (state: gamestate) (card: dcard) : gamestate =
-  let player = match_color (state.playerturn) (state.players) in
-  if List.mem card player.dcards then
-  let player = {player with dcards = (remove_from_list player.dcards card)} in
-  (match card with
-  | Knight -> move_robber
-      (check_largest_army state {player with army_size = player.army_size + 1})
-  | Victory_Card (name, desc) ->
-       (print_endline ("You played: " ^ name ^ "- " ^ desc));
-       let plyr = {player with victory_points = player.victory_points + 1} in
-       if (plyr.victory_points = 10) then {state with game_stage = End} else
-       change_player (state) (plyr)
-  | Progress_Card p -> (match p with
-               | Monopoly ->
-                let num = get_input true
-                ("Input one type of resource to take from all opponents\n
-                (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
-                play_monopoly state num
-               | Year_of_plenty ->
-                let num = get_input false
-                ("Input two types of resources to take with no space\n
-                (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
-                if num < 10 then play_year_plenty state 0 num
-                else
-                  play_year_plenty state ((num -(num mod 10))/10) (num mod 10)
-               | Road_Building -> play_road_building state))
-  else (print_endline "You do not have that dcard"); state
-
 let rec search_list (coor:coordinates) (tcoorList): bool =
   match tcoorList with
   | [] -> false
@@ -205,11 +155,25 @@ let rec search_towns (coor: coordinates) (towns: town list): bool =
               then true
             else search_towns coor t
 
-
 (*check whether or not it is possible to build a road where specified*)
 let is_valid_build_road (coor: coordinates) (p : player): bool =
   (search_list coor p.roads) || (search_towns coor p.towns)
 
+let rec is_overlap_road (road: coordinates * coordinates)
+(players: player list) : bool =
+  match players with
+  | [] -> false
+  | h::t -> let (a,b) = road in
+        if ((List.mem road h.roads) || (List.mem (b,a) h.roads))
+        then true
+        else is_overlap_road road t
+
+let can_build_road (startTileCoor: coordinates)
+(endTileCoor: coordinates) (state: gamestate) =
+  let currentPlayer = match_color state.playerturn state.players in
+  (((is_valid_build_road startTileCoor currentPlayer)
+          || (is_valid_build_road endTileCoor currentPlayer))
+        && not (is_overlap_road (startTileCoor, endTileCoor) state.players))
 let is_int s =
   try ignore (int_of_string s); true
   with _ -> false
@@ -252,8 +216,7 @@ let rec build_road (state: gamestate): gamestate =
   let startTileCoor = (conv s_tile s_corner) in
         let endTileCoor = (conv e_tile e_corner) in
         let currentPlayer = match_color state.playerturn state.players in
-        if((is_valid_build_road startTileCoor currentPlayer)
-          || (is_valid_build_road endTileCoor currentPlayer))
+        if(can_build_road startTileCoor endTileCoor state)
         then
         let updatePlayer = {currentPlayer with roads =
         (((startTileCoor),(endTileCoor))::(currentPlayer.roads))} in
@@ -288,6 +251,66 @@ let rec build (state: gamestate) (input:string): gamestate =
             else print_endline ("Insufficient resources"); state
   | _ -> build state input)
 
+let play_road_building (state:gamestate) : gamestate =
+  let state = build_road state in
+  build_road state
+
+let play_monopoly (state: gamestate) (resource: int) : gamestate =
+  let toAdd = List.fold_left (fun acc x ->
+                  if x.color = state.playerturn
+                  then acc
+                  else acc + (get_resource x resource))
+              0 state.players in
+  let plyrs = List.map (fun x ->
+              if x.color = state.playerturn
+              then change_resource x resource
+                (toAdd +(get_resource x resource))
+              else change_resource x resource 0) (state.players) in
+  {state with players = plyrs}
+
+let play_year_plenty
+  (state: gamestate) (resource1: int) (resource2: int) : gamestate =
+  let plyr = match_color (state.playerturn) (state.players) in
+  let plyr = change_resource plyr resource1
+        ((get_resource plyr resource1) + 1) in
+  let plyr = change_resource plyr resource2
+        ((get_resource plyr resource2) + 1) in
+  change_player state plyr
+
+
+let play_dcard (state: gamestate) (card: dcard) : gamestate =
+  let player = match_color (state.playerturn) (state.players) in
+  if List.mem card player.dcards then
+  let player = {player with dcards = (remove_from_list player.dcards card)} in
+  (match card with
+  | Knight -> let _ = print_string
+  "Please enter the letter of the tile you would like to move the robber to: " in
+  let input = read_line() in
+  if (Bytes.length input) > 1
+  then (let _ = print_endline "Invalid tile location" in state )
+  else move_robber
+      (check_largest_army state {player with army_size = player.army_size + 1})
+      (Bytes.get input 0)
+  | Victory_Card (name, desc) ->
+       (print_endline ("You played: " ^ name ^ "- " ^ desc));
+       let plyr = {player with victory_points = player.victory_points + 1} in
+       if (plyr.victory_points = 10) then {state with game_stage = End} else
+       change_player (state) (plyr)
+  | Progress_Card p -> (match p with
+               | Monopoly ->
+                let num = get_input true
+                ("Input one type of resource to take from all opponents\n
+                (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
+                play_monopoly state num
+               | Year_of_plenty ->
+                let num = get_input false
+                ("Input two types of resources to take with no space\n
+                (0 = Brick, 1 = Wool, 2 = Ore, 3 = Grain, 4 = Lumber):") in
+                if num < 10 then play_year_plenty state 0 num
+                else
+                  play_year_plenty state ((num -(num mod 10))/10) (num mod 10)
+               | Road_Building -> play_road_building state))
+else let _ = print_endline "You do not have that dcard" in state
 
 let pick_dcard gs = failwith "TODO"
 

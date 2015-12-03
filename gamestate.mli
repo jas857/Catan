@@ -32,7 +32,7 @@ val add_town : gamestate -> tile -> (color*int) -> gamestate
 (* play a given dcard in the current gamestate*)
 val play_dcard : gamestate -> dcard -> gamestate
 (* Move the robber among tiles *)
-val move_robber : gamestate ->  gamestate
+val move_robber : gamestate ->  tile_location -> gamestate
 
 (* Pick a card out of the list of cards and remove it *)
 val pick_dcard : gamestate -> gamestate
