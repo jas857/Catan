@@ -109,7 +109,7 @@ let rec move_robber (gs: gamestate) (c:tile_location): gamestate =
   match newRobLoc with
   |None -> let _ = print_endline "Invalid tile location"  in gs
   |Some loc ->
-    let nrl = loc in
+    let nrl = {loc with robber =true} in
     let gboard = gs.game_board in
     let robberless =
     rebuild_tile_list gboard.tiles (remove_robber gboard.tiles) in
@@ -122,9 +122,6 @@ let rec move_robber (gs: gamestate) (c:tile_location): gamestate =
 let rec change_player (state: gamestate) (plyr: player) : gamestate =
   let lst = change_player_list (state.players) (plyr) in
   {state with players = lst}
-
-
-
 
 
 let check_largest_army (state: gamestate) (changing_player: player): gamestate =
