@@ -105,7 +105,7 @@ else
   not(is_road (curpos, ((fst coord) - 1, (snd coord) - 1)) plyr)
 
 let rec curpos_change
-  (plyr: player) (roads: (coordinates * coordinates) list) : (bool*player) =
+  (roads: (coordinates * coordinates) list) (plyr: player): (bool*player) =
   match roads with
   | [] -> (false, plyr)
   | h::t -> if corner_can_expand (fst h) plyr then
@@ -116,4 +116,4 @@ let rec curpos_change
                 let _ = plyr.ai_vars.curpos <- snd h in
                 (true, plyr)
               else
-                curpos_change plyr t
+                curpos_change t plyr
