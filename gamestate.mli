@@ -60,3 +60,9 @@ val get_road_info : unit -> coordinates * coordinates
 val can_build_road : coordinates -> coordinates -> gamestate -> bool
 
 val build_road : gamestate -> coordinates * coordinates -> gamestate
+
+val change_resource_for_distr : player -> environment -> int -> player
+
+val dist_resources: player list -> (color*int) list -> environment-> player list
+
+val collect_player_resource: player list -> tile list -> int -> player list

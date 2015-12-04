@@ -374,6 +374,35 @@ let pick_dcard gs =
 
 let trade gs = failwith "TODO"
 
+(* Add amt of the specified resource to player. *)
+let change_resource_for_distr (plyr: player) (env:environment)
+(amt: int) : player =
+  match (env, plyr.resources) with
+  | Hills, (a,x,y,z,w) -> {plyr with resources = (amt + a,x,y,z,w)}
+  | Pasture, (x,a,y,z,w) -> {plyr with resources = (x,amt + a,y,z,w)}
+  | Mountains, (x,y,a,z,w) -> {plyr with resources = (x,y,amt + a,z,w)}
+  | Fields, (x,y,z,a,w) -> {plyr with resources = (x,y,z,amt + a,w)}
+  | Forest, (x,y,z,w,a) -> {plyr with resources = (x,y,z,w,amt + a)}
+  | Desert, (a,x,y,z,w) -> plyr
+
+(* Distribute the resources for a tile based on its towns field.
+Return a new player list with updated resource amounts.*)
+let rec dist_resources (players:player list)
+ (towns:(color * int) list) (env:environment): player list =
+  match towns with
+  | [] -> players
+  |(b, a)::t -> let tempPlayer = match_color b players in
+                let newPlayers = change_player_list players
+                (change_resource_for_distr tempPlayer env a) in
+                dist_resources newPlayers t env
+
+(* Collect resources from all tiles for all players, return a new
+player list with updated resource amounts. *)
+let rec collect_player_resource (players: player list)
+(tiles: tile list) (roll: int): player list =
+  let ts = (List.filter (fun t -> t.collect_on=roll) tiles) in
+  List.fold_left (fun (pl:player list) (t:tile) -> dist_resources pl t.towns t.env) players ts
+
 (* AI Functions *)
 
 (* Loop through tiles and record where they are in relation to current position*)
@@ -580,15 +609,75 @@ let rec move_position (state: gamestate) (plyr: player)  : gamestate =
                   let plyr = change_resource plyr 4 ((get_resource plyr 4)+1) in
                   change_player state plyr
 
-let a_i_makemove (state: gamestate): gamestate =
-  let player = match_color state.playerturn state.players in
+let ai_check_build_dcard (state: gamestate) (player: player) : gamestate =
+  if (get_resource player 1) > 0 && (get_resource player 2) > 0 &&
+      (get_resource player 3) > 0 then
+      (* Build Dcard *) failwith "TODO"
+  else
+    state
+
+let ai_check_build_road (state: gamestate) (player: player) : gamestate =
   if (get_resource player 0) > 0 && (get_resource player 4) > 0 then
+    (* Build road *)
     let player = change_resource player 0 ((get_resource player 0) - 1) in
     let player = change_resource player 4 ((get_resource player 4) - 1) in
     let gs = move_position state player in
     let plyr = match_color gs.playerturn gs.players in
     if (get_resource player 0) = (get_resource plyr 0) then
-      failwith "Build other stuff"
+      ai_check_build_dcard state player
     else
       gs
-  else failwith "Build other stuff"
+  else
+    ai_check_build_dcard state player
+
+let ai_check_build_settlement (state: gamestate) (player: player) : gamestate =
+  if (get_resource player 0) > 0 && (get_resource player 1) > 0 &&
+      (get_resource player 3) > 0 && (get_resource player 4) > 0 then
+      (* Build Settlement *) failwith "TODO"
+  else
+    ai_check_build_road state player
+
+let ai_check_build_city (state: gamestate) (player: player) : gamestate =
+  if (get_resource player 2) > 2 && (get_resource player 3) > 1 then
+      (* Build city *) failwith "TODO"
+  else
+    ai_check_build_settlement (state) (player)
+
+let a_i_makemove (state: gamestate): gamestate =
+  (* AI builds things in this order:
+      1. City
+      2. Settlement
+      3. Road
+      4. Dcard *)
+  let player = match_color state.playerturn state.players in
+  ai_check_build_city state player
+
+let has_dcards_to_play (player: player) : dcard list =
+  List.fold_left (fun lst d ->
+    match d with Knight -> d::lst | Progress_Card _ -> d::lst | _ -> lst)
+  []
+  player.dcards
+
+let ai_play_dcard (state: gamestate) (dcards: dcard list) : gamestate =
+  play_dcard state (List.nth dcards (Random.int (List.length dcards)))
+
+let ai_roll_or_play (state: gamestate): gamestate =
+  let player = match_color state.playerturn state.players in
+  let dcards_to_play = has_dcards_to_play player in
+  if (List.length dcards_to_play) > 0 then
+    ai_play_dcard state dcards_to_play
+  else
+    (* Roll *)
+    let _ = Random.self_init () in
+             let rnd = (((Random.int 6) + 2) + Random.int 6) in
+             let playersWResources =
+             collect_player_resource state.players state.game_board.tiles rnd in
+             change_stage {state with players = playersWResources}
+
+let ai_build_or_play (state: gamestate): gamestate =
+  let player = match_color state.playerturn state.players in
+  let dcards_to_play = has_dcards_to_play player in
+  if (List.length dcards_to_play) > 0 then
+    ai_play_dcard state dcards_to_play
+  else
+    a_i_makemove state

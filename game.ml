@@ -227,35 +227,6 @@ let _ = print_string [white;Bold] "This is a text prompt asking for some input.\
 (* Behaves like normal print_string. *)
 let print_string_w s = print_string [white;Bold;on_black]
 
-(* Add amt of the specified resource to player. *)
-let change_resource_for_distr (plyr: player) (env:environment)
-(amt: int) : player =
-  match (env, plyr.resources) with
-  | Hills, (a,x,y,z,w) -> {plyr with resources = (amt + a,x,y,z,w)}
-  | Pasture, (x,a,y,z,w) -> {plyr with resources = (x,amt + a,y,z,w)}
-  | Mountains, (x,y,a,z,w) -> {plyr with resources = (x,y,amt + a,z,w)}
-  | Fields, (x,y,z,a,w) -> {plyr with resources = (x,y,z,amt + a,w)}
-  | Forest, (x,y,z,w,a) -> {plyr with resources = (x,y,z,w,amt + a)}
-  | Desert, (a,x,y,z,w) -> plyr
-
-(* Distribute the resources for a tile based on its towns field.
-Return a new player list with updated resource amounts.*)
-let rec dist_resources (players:player list)
- (towns:(color * int) list) (env:environment): player list =
-  match towns with
-  | [] -> players
-  |(b, a)::t -> let tempPlayer = match_color b players in
-                let newPlayers = change_player_list players
-                (change_resource_for_distr tempPlayer env a) in
-                dist_resources newPlayers t env
-
-(* Collect resources from all tiles for all players, return a new
-player list with updated resource amounts. *)
-let rec collect_player_resource (players: player list)
-(tiles: tile list) (roll: int): player list =
-  let ts = (List.filter (fun t -> t.collect_on=roll) tiles) in
-  List.fold_left (fun (pl:player list) (t:tile) -> dist_resources pl t.towns t.env) players ts
-
 let rec match_to_Dcard () =
   let _ = print_string_w "Which dcard will you play?" in
   let cmd = get_cmd () in
@@ -267,9 +238,6 @@ let rec match_to_Dcard () =
   |"exit" -> None
   | _ -> let _ = print_string_w "cannot play this at the moment"
   in match_to_Dcard ()
-
-
-
 
 let rec rollOrPlay (cmd: string) (gs : gamestate) : gamestate =
   let lowercaseCmd = String.lowercase cmd in
@@ -305,9 +273,6 @@ let rec buildOrPlay (cmd: string) (gs : gamestate) : gamestate =
   |"end" -> change_stage gs
 
   | _ -> gs
-
-
-
 
 let rec main_repl (gs: gamestate) : gamestate =
   match gs.game_stage with
