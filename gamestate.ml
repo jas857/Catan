@@ -139,12 +139,6 @@ let check_largest_army (state: gamestate) (changing_player: player): gamestate =
     else change_player state changing_player
   else {state with players = new_players}
 
-let rec search_list (coor:coordinates) (tcoorList): bool =
-  match tcoorList with
-  | [] -> false
-  | (x,y)::t -> if ((x = coor) || (y = coor)) then true
-                else search_list coor t
-
 let rec search_towns (coor: coordinates) (towns: town list): bool =
   match towns with
   | [] -> false
@@ -154,7 +148,9 @@ let rec search_towns (coor: coordinates) (towns: town list): bool =
 
 (*check whether or not it is possible to build a road where specified*)
 let is_valid_build_road (coor: coordinates) (p : player): bool =
-  (search_list coor p.roads) || (search_towns coor p.towns)
+  let (starts,ends) = List.split p.roads in
+  let towns = List.map (fun t -> t.location) p.towns in
+  (List.mem coor starts) || (List.mem coor ends) || (List.mem coor towns)
 
 let rec is_overlap_road (road: coordinates * coordinates)
 (players: player list) : bool =
@@ -165,6 +161,27 @@ let rec is_overlap_road (road: coordinates * coordinates)
         then true
         else is_overlap_road road t
 
+let rec get_road_info () :(coordinates * coordinates) =
+  let _ = print_string
+  "Please enter the point you would like to start your road on: " in
+  let start_tile = read_line () in
+  if(String.length start_tile <> 2) then let _ =
+  print_string "unacceptable input" in get_road_info ()
+  else let s_tile = start_tile.[0] in
+  let s_corner = int_of_string (Char.escaped start_tile.[1]) in
+  let _ = print_string
+  "Please enter the point you would like to end your road on: " in
+  let end_tile = read_line () in
+  if(String.length end_tile <> 2) then let _ =
+  print_string "unacceptable input" in get_road_info ()
+  else let e_tile = end_tile.[0] in
+  let e_corner = int_of_string (Char.escaped end_tile.[1]) in
+
+
+  let startTileCoor = (conv s_tile s_corner) in
+  let endTileCoor = (conv e_tile e_corner) in
+  (startTileCoor, endTileCoor)
+
 (*says if road can be built at given coordinates*)
 let can_build_road (startTileCoor: coordinates)
 (endTileCoor: coordinates) (state: gamestate) : bool =
@@ -173,44 +190,7 @@ let can_build_road (startTileCoor: coordinates)
           || (is_valid_build_road endTileCoor currentPlayer))
         && not (is_overlap_road (startTileCoor, endTileCoor) state.players))
 
-let is_int s =
-  try ignore (int_of_string s); true
-  with _ -> false
-
 (*modifies the gamestate to include the built road*)
-
-let rec get_road_info () :(coordinates * coordinates) =
-  let _ = print_string
-  "Please enter the letter of the tile you would like to start your road on: " in
-  let start_tile = read_line() in
-  if(String.length start_tile <> 1) then let _ =
-  print_string "unacceptable input" in get_road_info ()
-  else let s_tile = start_tile.[0] in
-
-  let _ = print_string "Please enter the number of the tile
-  corner you would like to start your road on: " in
-  let start_corner = read_line() in
-  if(not (is_int start_corner)) then let _ =
-  print_string "unacceptable input" in get_road_info ()
-  else let s_corner = int_of_string start_corner in
-
-  let _ = print_string
-  "Please enter the letter of the tile you would like to end your road on: " in
-  let end_tile = read_line() in
-  if(String.length start_tile <> 1) then let _ =
-  print_string "unacceptable input" in get_road_info ()
-  else let e_tile = end_tile.[0] in
-
-  let _ = print_string "Please enter the number of the tile corner you
-  would like to end your road on: " in
-  let end_corner = read_line() in
-  if(not (is_int end_corner)) then let _ =
-  print_string "unacceptable input" in get_road_info ()
-  else let e_corner = int_of_string end_corner in
-
-  let startTileCoor = (conv s_tile s_corner) in
-  let endTileCoor = (conv e_tile e_corner) in
-  (startTileCoor, endTileCoor)
 
 (*builds the actual road in game state*)
 let rec build_road (state: gamestate)
@@ -237,30 +217,11 @@ let rec settlement_helper (tiles: tile list)
   then {h with towns = (clr, 1)::(h.towns)}::(settlement_helper t coor clr)
   else h::(settlement_helper t coor clr)
 
-let rec get_settlement_info () : coordinates =
-  let _ = print_string
-  "Please enter the letter of the tile
-  you would like to build your settlement on: " in
-  let start_tile = read_line() in
-  if(String.length start_tile <> 1) then let _ =
-  print_string "unacceptable input" in get_settlement_info ()
-  else let s_tile = start_tile.[0] in
-
-  let _ = print_string "Please enter the number of the tile
-  corner you would like to build your settlement on: " in
-  let start_corner = read_line() in
-  if(not (is_int start_corner)) then let _ =
-  print_string "unacceptable input" in get_settlement_info ()
-  else let s_corner = int_of_string start_corner in
-  (conv s_tile s_corner)
-
 let can_build_settlement (gs: gamestate) (coor: coordinates): bool =
   let adjs = adjacents coor in
   let blocks_build (pl:player) =
     any (fun t -> List.mem t.location adjs) pl.towns in
   not (any blocks_build gs.players)
-
-
 
 
 let rec build_settlement (gs: gamestate) ( coor: coordinates): gamestate =
@@ -359,7 +320,7 @@ let play_dcard (state: gamestate) (card: dcard) : gamestate =
                | Road_Building -> let r1 = get_road_info () in
                                   let r2 = get_road_info () in
                                   play_road_building state r1 r2))
-else let _ = print_endline "You do not have that dcard" in state
+  else let _ = print_endline "You do not have that dcard" in state
 
 let pick_dcard gs =
   let tempPlayer = match_color gs.playerturn gs.players in

@@ -14,6 +14,9 @@ type pixrow = pixel list
 
 type pixboard = pixrow list
 
+(* Behaves like normal print_string. *)
+let print_string_w s = print_string [white;Bold;on_black] s
+
 let string_to_pix_st s st =
   let cs = string_to_char_list s in
   List.map (fun c -> (c,st)) cs
@@ -187,7 +190,7 @@ let print_player pb p =
     write_board pb (r,c) (string_to_pix_st str st) in
   List.fold_left print_road pb p.roads
 
-let print_game gs =
+let print_game gs=
   let pb = board_start in
   let pb = print_board pb gs.game_board in
   let pb = print_resources pb (match_color gs.playerturn gs.players) in
@@ -196,10 +199,12 @@ let print_game gs =
 (* Test content for printing *)
 let player1 = {
   roads_left=3;
-  roads=[((2,2),(3,3));((3,3),(4,3));((4,3),(5,3))];
+  (* roads=[((2,2),(3,3));((3,3),(4,3));((4,3),(5,3))]; *)
+  roads=[];
   settlements_left=3;
   cities_left=3;
-  towns=[{location=(2,2);pickup=1};{location=(7,3);pickup=2}];
+  (* towns=[{location=(2,2);pickup=1};{location=(7,3);pickup=2}]; *)
+  towns=[];
   victory_points=0;
   dcards=[];
   resources = (2,3,4,5,6);
@@ -216,16 +221,13 @@ let player1 = {
 let test_gs = {playerturn=Red;
                players=[player1];
                game_board=initialize_board ();
-               game_stage=Build;
+               game_stage=Start;
                longest_road_claimed=false;
                largest_army_claimed=false}
 
-let _ = print_game test_gs
-let _ = print_string [white;Bold] "This is a text prompt asking for some input.\n"
+(* let _ = print_game test_gs
+let _ = print_string [white;Bold] "This is a text prompt asking for some input.\n" *)
 (* End print testing *)
-
-(* Behaves like normal print_string. *)
-let print_string_w s = print_string [white;Bold;on_black]
 
 (* Add amt of the specified resource to player. *)
 let change_resource_for_distr (plyr: player) (env:environment)
@@ -307,21 +309,35 @@ let rec buildOrPlay (cmd: string) (gs : gamestate) : gamestate =
   | _ -> gs
 
 
+let rec get_settlement_info () : coordinates =
+  let _ = print_string_w "Please enter the letter of the tile you would like to build your settlement on: " in
+  let start_tile = String.uppercase (read_line ()) in
+  if(String.length start_tile <> 1) then
+    let _ = print_string_w "unacceptable input" in
+    get_settlement_info ()
+  else let s_tile = start_tile.[0] in
 
+  let _ = print_string_w "Please enter the number of the tile
+  corner you would like to build your settlement on: " in
+  let start_corner = read_line() in
+  if(not (is_int start_corner)) then let _ =
+  print_string_w "unacceptable input" in get_settlement_info ()
+  else let s_corner = int_of_string start_corner in
+  (conv s_tile s_corner)
 
 let rec main_repl (gs: gamestate) : gamestate =
   match gs.game_stage with
   | Start -> let _ = print_game gs (*prints game*) in
              let coor = get_settlement_info () in (*get settlement coordinates*)
-              (*checks if can build settlement UNIMPLENTED*)
              if( not (can_build_settlement gs coor))
                then let _ = print_string_w "invalid inputs, redo turn" in
                 main_repl gs (*wrong input*)
              else let gs1 = build_settlement gs coor in(*correct input*)
-             let (s, e) = get_road_info() in (*get road coordinates*)
-             if( not (can_build_road s e gs)) then
+             let _ = print_game gs1 in
+             let (s, e) = get_road_info () in (*get road coordinates*)
+             if( not (can_build_road s e gs1)) then
              let _ = print_string_w "invalid inputs, redo turn" in main_repl gs
-             else main_repl (change_stage (build_road gs1 (s,e)))
+             else main_repl (build_road gs1 (s,e))
              (*build road then change turn*)
   | Production -> let _ = print_string_w
             "type roll or play: roll the die or play a development card" in
@@ -334,3 +350,5 @@ let rec main_repl (gs: gamestate) : gamestate =
             let cmd = get_cmd () in
              main_repl (buildOrPlay cmd gs)
   | End -> gs
+
+let _ = main_repl test_gs

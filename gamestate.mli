@@ -49,14 +49,12 @@ val change_player : gamestate -> player -> gamestate
 
 val match_color : color -> player list -> player
 
-val get_settlement_info : unit -> coordinates
-
 val can_build_settlement : gamestate -> coordinates -> bool
 
 val build_settlement : gamestate -> coordinates -> gamestate
 
-val get_road_info : unit -> coordinates * coordinates
-
 val can_build_road : coordinates -> coordinates -> gamestate -> bool
 
 val build_road : gamestate -> coordinates * coordinates -> gamestate
+
+val get_road_info : unit -> coordinates * coordinates

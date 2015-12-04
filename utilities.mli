@@ -21,3 +21,5 @@ val adjacents : coordinates -> coordinates list
 val any : ('a -> bool) -> 'a list -> bool
 
 val get_cmd : unit -> string
+
+val is_int : string -> bool

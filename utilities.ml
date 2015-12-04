@@ -69,3 +69,7 @@ let rec any f l =
       |[] -> false
 
 let get_cmd () = String.lowercase (read_line ())
+
+let is_int s =
+  try ignore (int_of_string s); true
+  with _ -> false
