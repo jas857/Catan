@@ -222,6 +222,7 @@ let rec get_settlement_info () : coordinates =
   get_pos ()
 
 let can_build_settlement (gs: gamestate) (coor: coordinates): bool =
+  if not (in_bounds coor) then false else
   let adjs = adjacents coor in
   let blocks_build (pl:player) =
     any (fun t -> List.mem t.location adjs) pl.towns in
@@ -260,6 +261,7 @@ let rec get_city_info (): (coordinates) =
 
 (*checks to see if we can build a city at the given location*)
 let can_build_city (gs: gamestate) (coor: coordinates) : bool =
+  if not (in_bounds coor) then false else
   let currentPlayer = curr_player gs in
   any (fun t -> t.pickup=1 && t.location=coor) currentPlayer.towns
 
