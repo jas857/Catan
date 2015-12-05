@@ -70,10 +70,16 @@ let change_turn (gs:gamestate) =
 
   (*print out victor and any other details about game over*)
 let game_complete (gs:gamestate) =
-  failwith "todo"
+  let _ = print_game gs in
+  let winner = gs.playerturn in
+  match winner with
+  |Red -> let _ = print_string "Congratulations Red You Have Been Victorious!" in {gs with game_stage = End}
+  |Blue -> let _ = print_string "Congratulations Blue You Have Been Victorious!" in {gs with game_stage = End}
+  |White -> let _ = print_string "Congratulations White You Have Been Victorious!" in {gs with game_stage = End}
+  |Orange -> let _ = print_string "Congratulations Orange You Have Been Victorious!" in {gs with game_stage = End}
 
 (* Change the stage of the game, should only be called when a player has
-has finsihed a stage and the stage should be changed *)
+has finished a stage and the stage should be changed *)
 let change_stage (gs:gamestate) =
   match gs.game_stage with
   |Start -> choose_next_start gs
