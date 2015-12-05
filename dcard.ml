@@ -1,3 +1,5 @@
+open Utilities
+
 (* Name of development card *)
 type name = string
 
@@ -22,13 +24,15 @@ let rec remove_from_list (dcards: dcard list) (card: dcard) : dcard list =
 let rec get_input (monopoly: bool) (message: string) : int =
   print_string message;
   let input = read_line() in
-    (match int_of_string input with
-     | s -> if monopoly then
+    if is_int input then
+    let s = int_of_string input in
+        if monopoly then
           if s >= 0 && s <= 4 then s else get_input monopoly message
         else
           if s >= 0 && s <= 44 then
              if s mod 10 <= 4 then s else get_input monopoly message
-            else get_input monopoly message)
+          else get_input monopoly message
+    else get_input monopoly message
 
 let rec initialize_dcards_helper ans =
     let _ = Random.self_init () in

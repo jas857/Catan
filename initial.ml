@@ -51,6 +51,13 @@ let default_gs = {playerturn=Red;
                longest_road_claimed=false;
                largest_army_claimed=false}
 
+let single_player_gs = {playerturn=Red;
+               players = initialize_single_player ();
+               game_board=initialize_board ();
+               game_stage=Start;
+               longest_road_claimed=false;
+               largest_army_claimed=false}
+
 let trade_gs =
   {default_gs with
   players=List.map (fun p -> {p with resources=(9,9,9,9,9)}) default_gs.players;

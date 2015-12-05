@@ -317,6 +317,7 @@ let rec trade_repl gs : gamestate =
 
 let rec prod_repl (gs : gamestate) : gamestate =
 if (curr_player gs).a_i then
+  let _ = print_endline("roll") in
   ai_roll_or_play gs
 else
   let gs = update_exchanges gs in
@@ -344,6 +345,7 @@ else
 
 let rec build_repl (gs : gamestate) : gamestate =
 if (curr_player gs).a_i then
+  let _ = print_endline("build") in
   ai_build_or_play gs
 else
   let _ = print_game gs in
@@ -373,4 +375,4 @@ let rec main_repl (gs: gamestate) : gamestate =
   | End -> gs
 
 (* let _ = main_repl trade_gs *)
-let _ = main_repl default_gs
+let _ = main_repl single_player_gs

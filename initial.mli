@@ -12,5 +12,8 @@ val trade_gs : gamestate
 game. Begins in Build. *)
 val default_gs : gamestate
 
+(* A gamestate with 3 ai players *)
+val single_player_gs : gamestate
+
 (* A normal gamestate where Build has already been completed. *)
 val fast_gs : gamestate

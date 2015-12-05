@@ -95,9 +95,20 @@ let init_non_ai_player (c:color) = {roads_left = 15; roads = []; settlements_lef
   down = 0}; army_size = 0; largest_army = false;
   road_size = 0; longest_road = false}
 
+let init_ai_player (c:color) = {roads_left = 15; roads = []; settlements_left = 5;
+  cities_left = 4; towns = []; victory_points = 0;
+  dcards = []; resources = (0,0,0,0,0); exchange = (4,4,4,4,4);
+  color = c; a_i = true; ai_vars = {curpos = (0,0); left = 0; right = 0; up = 0;
+  down = 0}; army_size = 0; largest_army = false;
+  road_size = 0; longest_road = false}
+
 let initialize_non_ai_players () =
   [init_non_ai_player Red; init_non_ai_player Blue;
   init_non_ai_player White; init_non_ai_player Orange]
+
+let initialize_single_player () =
+  [init_non_ai_player Red; init_ai_player Blue;
+    init_ai_player White; init_ai_player Orange]
 
 let is_road (road: coordinates * coordinates) (plyr:player): bool =
   let (a,b) = road in

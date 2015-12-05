@@ -43,6 +43,8 @@ val change_resource  : player -> int -> int -> player
 val change_resources : player -> rsrc -> player
 val update_largest_army : player list -> player -> player list
 val initialize_non_ai_players : unit -> player list
+val init_ai_player : color -> player
+val initialize_single_player : unit -> player list
 val init_non_ai_player : color -> player
 val is_road : (coordinates * coordinates) -> player -> bool
 val corner_can_expand : coordinates -> player -> bool
