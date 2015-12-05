@@ -49,3 +49,11 @@ let initialize_dcards (): dcard list =
     Knight; Progress_Card(Monopoly); Progress_Card(Monopoly);
     Knight; Knight] in
     initialize_dcards_helper deckAns
+
+let string_of_card c =
+  match c with
+  |Knight -> "knight"
+  |Progress_Card(Monopoly) -> "monopoly"
+  |Progress_Card(Road_Building) -> "road"
+  |Progress_Card(Year_of_plenty) -> "year of plenty"
+  |Victory_Card(_) -> "victory card"

@@ -8,7 +8,7 @@ open Dcard
 
 (* Stage of the game *)
 type stage =
-	| Start | Production | Trade | Build | End
+	| Start | Production | Build | End
 
 (* State of the game *)
 type gamestate = {

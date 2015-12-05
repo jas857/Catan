@@ -54,7 +54,7 @@ let default_gs = {playerturn=Red;
 let trade_gs =
   {default_gs with
   players=List.map (fun p -> {p with resources=(9,9,9,9,9)}) default_gs.players;
-  game_stage=Trade}
+  game_stage=Build}
 
 let fast_gs = rebuild_towns {default_gs with
                              game_stage=Production;
@@ -62,20 +62,24 @@ let fast_gs = rebuild_towns {default_gs with
                                 {red_player with
                                  towns=[twn (0,0) 1; twn (2,0) 1];
                                  roads=[((0,0),(1,1));((1,1),(2,1))];
+                                 resources=(6,6,6,6,6);
                                  roads_left=13;
                                  settlements_left=3};
                                  {blue_player with
                                  towns=[twn (4,0) 1; twn (0,1) 1];
                                  roads=[((4,0),(5,0));((0,1),(1,1))];
+                                 resources=(6,6,6,6,6);
                                  roads_left=13;
                                  settlements_left=3};
                                  {white_player with
                                  towns=[twn (2,1) 1; twn (4,1) 1];
                                  roads=[((2,1),(3,1));((3,1),(4,1))];
+                                 resources=(6,6,6,6,6);
                                  roads_left=13;
                                  settlements_left=3};
                                  {orange_player with
                                  towns=[twn (6,1) 1; twn (0,2) 1];
                                  roads=[((6,1),(7,1));((7,1),(6,0))];
+                                 resources=(6,6,6,6,6);
                                  roads_left=13;
                                  settlements_left=3}]}

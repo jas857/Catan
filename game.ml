@@ -251,15 +251,15 @@ let rec collect_player_resource (players: player list)
     pl t.towns t.env) players ts
 
 let rec match_to_Dcard () =
-  let _ = print_string_w "Which dcard will you play?" in
+  let _ = print_string_w "Which dcard will you play? " in
   let cmd = get_cmd () in
   match cmd with
   |"knight" -> Some(Knight)
   |"monopoly" -> Some(Progress_Card(Monopoly))
   |"year of plenty" -> Some(Progress_Card(Year_of_plenty))
-  |"road building" -> Some(Progress_Card(Road_Building))
+  |"road" -> Some(Progress_Card(Road_Building))
   |"exit" -> None
-  | _ -> let _ = print_string_w "cannot play this at the moment"
+  | _ -> let _ = print_string_w "That doesn't appear to be a dcard type. Please choose from [knight, monopoly, year of plenty, road] or exit to play nothing.\n"
   in match_to_Dcard ()
 
 let min5 j k =
@@ -302,13 +302,14 @@ let rec start_repl gs =
 "trade X brick wool" will spend at most X bricks to purchase wool. *)
 let rec trade_repl gs : gamestate =
   let _ = print_game gs in
-  let _ = print_string_w "Please enter a command in the following format, or \"end\" to end trading: \"trade [int] [resource to spend] [resource to purchase]\"\n" in
+  let _ = print_string_w "Please enter a command in the following format, or \"end\" to end trading:
+    \"trade [int] [resource to spend] [resource to purchase]\"\n" in
   let cmd = split_char ' ' (get_cmd ()) in
-  if List.nth cmd 0 = "end" then change_stage gs else
+  if List.nth cmd 0 = "end" then gs else
   if (List.length cmd) <> 4 then
     trade_repl gs
   else
-    change_stage (trade gs
+    trade_repl (trade gs
       (List.nth cmd 2) (List.nth cmd 3) (int_of_string (List.nth cmd 1)))
 
 let rec prod_repl (gs : gamestate) : gamestate =
@@ -323,7 +324,7 @@ let rec prod_repl (gs : gamestate) : gamestate =
              let playersWResources =
              collect_player_resource gs.players gs.game_board.tiles rnd in
              let gs = {gs with players = playersWResources} in
-             let _ = printf [white;Bold] "You rolled a %d" rnd in
+             let _ = printf [white;Bold] "You rolled a %d\n" rnd in
              change_stage gs
 
   |"play" -> (match (match_to_Dcard ()) with
@@ -336,11 +337,12 @@ let rec prod_repl (gs : gamestate) : gamestate =
 
 
 let rec build_repl (gs : gamestate) : gamestate =
+  let _ = print_game gs in
   let _ = print_string_w
-   "type build, play, or end to build something, play a development card or end your turn\n" in
+   "type buy, play, trade, or end to build something, play a development card, begin trading or end your turn\n" in
   let lowercaseCmd = String.lowercase (get_cmd ()) in
   match lowercaseCmd with
-  |"build" -> let _ = print_string_w "What would you like to build?" in
+  |"buy" -> let _ = print_string_w "What would you like to buy? [road settlement city dcard]?\n" in
               build gs (get_cmd ())
 
   |"play" -> (match (match_to_Dcard ()) with
@@ -349,6 +351,7 @@ let rec build_repl (gs : gamestate) : gamestate =
                                 then prod_repl gs
                               else ans
                 | None -> gs)
+  |"trade" -> build_repl (trade_repl gs)
   |"end" -> change_stage gs
 
   | _ -> gs
@@ -357,7 +360,6 @@ let rec main_repl (gs: gamestate) : gamestate =
   match gs.game_stage with
   | Start -> main_repl (start_repl gs)
   | Production -> main_repl (prod_repl gs)
-  | Trade -> main_repl (trade_repl gs)
   | Build -> main_repl (build_repl gs)
   | End -> gs
 

@@ -9,7 +9,7 @@ open Town
 (* Gamestate module. Holds information and communicates with all modules. *)
 
 type stage =
-  | Start | Production | Trade | Build | End
+  | Start | Production | Build | End
 
 (* State of the game *)
 type gamestate = {
@@ -77,8 +77,7 @@ has finsihed a stage and the stage should be changed *)
 let change_stage (gs:gamestate) =
   match gs.game_stage with
   |Start -> choose_next_start gs
-  |Production -> {gs with game_stage = Trade}
-  |Trade -> {gs with game_stage = Build}
+  |Production -> {gs with game_stage = Build}
   |Build -> change_turn gs
   |End -> game_complete gs
 
@@ -287,17 +286,18 @@ let rec build_city (gs: gamestate) (coor: coordinates) : gamestate =
 
 let pick_dcard gs =
   let tempPlayer = curr_player gs in
-  let temp = change_player_list gs.players
-  {tempPlayer with dcards =
-  (List.hd gs.game_board.dcards)::(tempPlayer.dcards)} in
-  {gs with players = temp;game_board =
-  {gs.game_board with dcards = List.tl gs.game_board.dcards}}
+  let card = List.hd gs.game_board.dcards in
+  let _ = print_string ("You picked up a "^(string_of_card card)^" card.\n") in
+  let gs = change_player gs
+    {tempPlayer with dcards = card::tempPlayer.dcards} in
+  {gs with
+    game_board = {gs.game_board with dcards = List.tl gs.game_board.dcards}}
 
 let pick_dcard_subtract_cost (gs:gamestate): gamestate =
-  let tempGs = pick_dcard gs in
+  let gs = pick_dcard gs in
   let currentPlayer = curr_player gs in
   let tempPlayer = change_resources currentPlayer (0,-1,-1,-1,0) in
-  change_player tempGs tempPlayer
+  change_player gs tempPlayer
 
 
 (*handles all of the building, checking, and inputting*)
