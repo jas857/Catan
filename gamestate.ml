@@ -76,7 +76,7 @@ let change_stage (gs:gamestate) =
   |Start -> choose_next_start gs
   |Production -> {gs with game_stage = Build}
   |Build -> change_turn gs
-  |End -> game_complete gs
+  |End -> gs
 
 
 (* returns tile given a character location of the tile *)
