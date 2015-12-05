@@ -395,7 +395,7 @@ let rec main_repl (gs: gamestate) : gamestate =
   | Build -> if(hasWon gs.players)
                       then main_repl (game_complete gs)
                   else main_repl (build_repl gs)
-  | End -> gs
+  | End -> game_complete gs
 
 (* let _ = main_repl trade_gs *)
 let _ = main_repl single_player_gs
