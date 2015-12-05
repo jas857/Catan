@@ -14,4 +14,4 @@ open Gamestate
 (* val print_help : stage -> unit *)
 
 (* Main REPL function that takes input and does functions *)
-(* val main_repl : gamestate -> gamestate *)
+val main_repl : gamestate -> gamestate

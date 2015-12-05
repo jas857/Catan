@@ -7,3 +7,5 @@ type town = {
 	location : coordinates;
 	pickup : int
 }
+
+val twn : int*int -> int -> town

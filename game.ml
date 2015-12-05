@@ -7,7 +7,7 @@ open Gamestate
 open Player
 open Town
 open Dcard
-open Str
+open Initial
 
 type pixel = char * style list
 
@@ -207,42 +207,6 @@ let print_game gs =
   let pb = List.fold_left print_player pb gs.players in
   let pb = print_turn pb gs in
   print_pixboard pb
-(* Test content for printing *)
-let red_player = {
-  roads_left=15;
-  (* roads=[((2,2),(3,3));((3,3),(4,3));((4,3),(5,3))]; *)
-  roads=[];
-  settlements_left=5;
-  cities_left=4;
-  (* towns=[{location=(2,2);pickup=1};{location=(7,3);pickup=2}]; *)
-  towns=[];
-  victory_points=0;
-  dcards=[];
-  resources = (6,6,6,6,6);
-  exchange = (4,4,4,4,4);
-  color = Red;
-  a_i = false;
-  ai_vars = {curpos= (0,0); left=0;right=0;up=0;down=0};
-  army_size=0;
-  largest_army=false;
-  road_size=0;
-  longest_road = false
-}
-let blue_player = {red_player with color=Blue}
-let white_player = {red_player with color=White}
-let orange_player = {red_player with color=Orange}
-
-let test_gs = {playerturn=Red;
-               players=[red_player;blue_player;white_player;orange_player];
-               game_board=initialize_board ();
-               game_stage=Trade;
-               longest_road_claimed=false;
-               largest_army_claimed=false}
-
-(* let _ = print_game test_gs
-let _ = print_string [white;Bold] "This is a text prompt asking for some input.\n" *)
-(* End print testing *)
-
 
 (* Add amt of the specified resource to player. *)
 let change_resource_for_distr (plyr: player) (env:environment)
@@ -286,79 +250,104 @@ let rec match_to_Dcard () =
   | _ -> let _ = print_string_w "cannot play this at the moment"
   in match_to_Dcard ()
 
-let rec rollOrPlay (cmd: string) (gs : gamestate) : gamestate =
+let min5 j k =
+  let (a,b,c,d,e) = j in
+  let (v,w,x,y,z) = k in
+  (min a v, min b w, min c x, min d y, min e z)
+
+(* Updates the current player's exchange rates from their settlements and
+  cities. *)
+let update_exchanges gs =
+  let pl = curr_player gs in
+  let check_port (b:player) (a:port) =
+    if any (fun t -> t.location = a.location) b.towns then
+      {b with exchange= min5 a.exchange b.exchange}
+    else b in
+  change_player gs (List.fold_left check_port {pl with exchange=(4,4,4,4,4)}
+    gs.game_board.ports)
+
+(* Perform the start stage of the game. When complete, every player
+should have two settlements and two roads. *)
+let rec start_repl gs =
+  let gs = update_exchanges gs in
+  let rec start_settlement gs : gamestate=
+    let _ = print_game gs in
+    let coor = get_settlement_info () in
+    if not (can_build_settlement gs coor) then
+      let _ = print_string_w "Cannot build a settlement there.\n" in
+      start_settlement gs
+    else build_settlement gs coor true in
+  let gs = start_settlement gs in
+  let rec start_road gs : gamestate=
+    let _ = print_game gs in
+    let (s, e) = get_road_info () in
+    if can_build_road s e gs then change_stage (build_road gs (s,e)) else
+      let _ = print_string_w "Cannot build a road there, please try again.\n" in
+      start_road gs in
+  start_road gs
+
+(* Perform the trade phase of the game. Trade command format:
+"trade X brick wool" will spend at most X bricks to purchase wool. *)
+let rec trade_repl gs : gamestate =
+  let _ = print_string_w "Please enter a command in the following format, or \"end\" to end trading: \"trade [int] [resource to spend] [resource to purchase]\"\n" in
+  let cmd = split_char ' ' (get_cmd ()) in
+  if List.nth cmd 0 = "end" then change_stage gs else
+  if (List.length cmd) <> 4 then
+    trade_repl gs
+  else
+    change_stage (trade gs
+      (List.nth cmd 2) (List.nth cmd 3) (int_of_string (List.nth cmd 1)))
+
+let rec prod_repl (cmd: string) (gs : gamestate) : gamestate =
+  let gs = update_exchanges gs in
   let lowercaseCmd = String.lowercase cmd in
   match lowercaseCmd with
   |"roll" -> let _ = Random.self_init () in
              let rnd = (((Random.int 6) + 2) + Random.int 6) in
              let playersWResources =
              collect_player_resource gs.players gs.game_board.tiles rnd in
-             change_stage {gs with players = playersWResources}
+             let gs = {gs with players = playersWResources} in
+             let _ = printf [white;Bold] "You rolled a %d" rnd in
+             change_stage gs
 
   |"play" -> (match (match_to_Dcard ()) with
                 | Some(x) -> (let ans = play_dcard gs x in
                               if(ans = gs)
-                                then rollOrPlay "play" gs
+                                then prod_repl "play" gs
                               else ans)
                 | None -> gs)
   | _ -> gs
 
 
-let rec buildOrPlay (cmd: string) (gs : gamestate) : gamestate =
-  let lowercaseCmd = String.lowercase cmd in
+let rec build_repl (gs : gamestate) : gamestate =
+  let _ = print_string_w
+   "type build, play, or end to build something, play a development card or end your turn\n" in
+  let lowercaseCmd = String.lowercase (get_cmd ()) in
   match lowercaseCmd with
   |"build" -> let _ = print_string_w "What would you like to build?" in
-              let cmd2 = read_line() in
-              build gs cmd2
+              build gs (get_cmd ())
 
   |"play" -> (match (match_to_Dcard ()) with
                 | Some(x) -> let ans = play_dcard gs x in
                               if(ans = gs)
-                                then rollOrPlay "play" gs
+                                then prod_repl "play" gs
                               else ans
                 | None -> gs)
   |"end" -> change_stage gs
 
   | _ -> gs
 
-
-(* Command format:
-"trade X brick wool" will spend at most X bricks to purchase wool. *)
-let rec trade_repl gs : gamestate =
-  let _ = print_string_w "Please enter a command in the format: \"trade [int] [resource to spend] [resource to purchase]\"\n" in
-  let cmd = split_char ' ' (get_cmd ()) in
-  if (List.length cmd) <> 4 then
-    trade_repl gs
-  else
-    trade gs (List.nth cmd 2) (List.nth cmd 3) (int_of_string (List.nth cmd 1))
-
 let rec main_repl (gs: gamestate) : gamestate =
   match gs.game_stage with
-  | Start -> let _ = print_game gs (*prints game*) in
-             let coor = get_settlement_info () in (*get settlement coordinates*)
-             if( not (can_build_settlement gs coor))
-               then let _ = print_string_w
-                "Cannot build a settlement there, redo turn\n" in
-                main_repl gs (*wrong input*)
-             else let gs1 = build_settlement gs coor true in(*correct input*)
-             let _ = print_game gs1 in
-             let (s, e) = get_road_info () in (*get road coordinates*)
-             if( not (can_build_road s e gs1)) then
-             let _ = print_string_w
-              "Cannot build a road there, redo turn\n" in main_repl gs
-             else main_repl (change_stage (build_road gs1 (s,e)))
-             (*build road then change turn*)
+  | Start -> main_repl (start_repl gs)
   | Production -> let _ = print_string_w
             "type roll or play: roll the die or play a development card.\n" in
             let cmd = get_cmd () in
-             main_repl (rollOrPlay cmd gs)
+             main_repl (prod_repl cmd gs)
   | Trade ->let _ = print_game gs in
             main_repl (trade_repl gs)
-  | Build -> let _ = print_string_w
-            "type build, play, or end: build something,
-             play a development card or end your turn\n" in
-            let cmd = get_cmd () in
-             main_repl (buildOrPlay cmd gs)
+  | Build -> main_repl (build_repl gs)
   | End -> gs
 
-let _ = main_repl test_gs
+(* let _ = main_repl trade_gs *)
+let _ = main_repl fast_gs

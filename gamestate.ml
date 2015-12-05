@@ -232,26 +232,12 @@ let location_empty (gs: gamestate) (coor: coordinates) : bool =
     any (fun t -> t.location = coor) plyr.towns in
   not (any town_on_loc gs.players)
 
-let min5 j k =
-  let (a,b,c,d,e) = j in
-  let (v,w,x,y,z) = k in
-  (min a v, min b w, min c x, min d y, min e z)
-
-(* Rebuilds a player's exchange rates from their settlements and cities. *)
-let update_exchanges gs (pl:player) =
-  let check_port (b:player) (a:port) =
-    if any (fun t -> t.location = a.location) b.towns then
-      {b with exchange= min5 a.exchange b.exchange}
-    else b in
-  List.fold_left check_port {pl with exchange=(4,4,4,4,4)} gs.game_board.ports
-
 let rec build_settlement (gs: gamestate) (coor: coordinates)
                          (free: bool): gamestate =
   let currentPlayer = curr_player gs in
   let tempPlayer = {currentPlayer with
   settlements_left = currentPlayer.settlements_left - 1;
   towns = {location = coor; pickup = 1}::(currentPlayer.towns)} in
-  let tempPlayer = update_exchanges gs tempPlayer in
   let gs = change_player gs (if free then tempPlayer else
       change_resources tempPlayer (-1,-1,0,-1,-1)) in
   {gs with game_board = {gs.game_board with
@@ -332,7 +318,7 @@ let rec build (state: gamestate) (input:string): gamestate =
               if(can_build_settlement state sCoor)
               (*check if settlement can be built*)
                 then (build_settlement state sCoor false)
-              else let _ = print_string "cannot buil a settlement here" in state
+              else let _ = print_string "cannot build a settlement here\n" in state
               (*if cannot build a settlement then return original gamestate*)
 
              else let _ = print_endline ("Insufficient resources") in state
@@ -342,7 +328,7 @@ let rec build (state: gamestate) (input:string): gamestate =
             then let cityCoor = get_city_info () in
               if (can_build_city state cityCoor) (*check if can build city at coor*)
                   then (build_city state cityCoor) (*build city if can*)
-              else let _ = print_string "cannot build a city here" in
+              else let _ = print_string "cannot build a city here\n" in
               state (*if cannot build city then return original gamestate*)
 
             else let _ = print_endline ("Insufficient resources") in state

@@ -66,3 +66,5 @@ val change_resource_for_distr : player -> environment -> int -> player
 val dist_resources: player list -> (color*int) list -> environment-> player list
 
 val collect_player_resource: player list -> tile list -> int -> player list
+
+val curr_player : gamestate -> player
