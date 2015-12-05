@@ -68,3 +68,9 @@ val dist_resources: player list -> (color*int) list -> environment-> player list
 val collect_player_resource: player list -> tile list -> int -> player list
 
 val curr_player : gamestate -> player
+
+val ai_start_stage : gamestate -> gamestate
+
+val ai_roll_or_play : gamestate -> gamestate
+
+val ai_build_or_play : gamestate -> gamestate

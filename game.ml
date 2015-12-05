@@ -281,6 +281,9 @@ let update_exchanges gs =
 (* Perform the start stage of the game. When complete, every player
 should have two settlements and two roads. *)
 let rec start_repl gs =
+if (curr_player gs).a_i then
+  ai_start_stage gs
+else
   let gs = update_exchanges gs in
   let rec start_settlement gs : gamestate=
     let _ = print_game gs in
@@ -313,6 +316,9 @@ let rec trade_repl gs : gamestate =
       (List.nth cmd 2) (List.nth cmd 3) (int_of_string (List.nth cmd 1)))
 
 let rec prod_repl (gs : gamestate) : gamestate =
+if (curr_player gs).a_i then
+  ai_roll_or_play gs
+else
   let gs = update_exchanges gs in
   let _ = print_game gs in
   let _ = print_string_w
@@ -337,6 +343,9 @@ let rec prod_repl (gs : gamestate) : gamestate =
 
 
 let rec build_repl (gs : gamestate) : gamestate =
+if (curr_player gs).a_i then
+  ai_build_or_play gs
+else
   let _ = print_game gs in
   let _ = print_string_w
    "type buy, play, trade, or end to build something, play a development card, begin trading or end your turn\n" in
@@ -364,4 +373,4 @@ let rec main_repl (gs: gamestate) : gamestate =
   | End -> gs
 
 (* let _ = main_repl trade_gs *)
-let _ = main_repl fast_gs
+let _ = main_repl default_gs

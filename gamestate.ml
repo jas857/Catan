@@ -645,6 +645,7 @@ let ai_check_build_dcard (state: gamestate) (player: player) : gamestate =
       pick_dcard state
   else
     state
+
 let ai_check_build_road (state: gamestate) (player: player) : gamestate =
   if (get_resource player 0) > 0 && (get_resource player 4) > 0 then
     (* Build road *)
@@ -666,9 +667,24 @@ let ai_check_build_settlement (state: gamestate) (player: player) : gamestate =
   else
     ai_check_build_road state player
 
+let rec ai_look_for_upgrades (state:gamestate) (num1:int) (num2:int):gamestate =
+  let tiles = List.filter
+    (fun tile -> tile.collect_on = num1 || tile.collect_on = num2)
+    state.game_board.tiles in
+  let corners = List.fold_left (fun acc t -> acc@(corners t)) [] tiles in
+  let player = curr_player state in
+  let settlements = List.filter (fun twn -> twn.pickup = 1) player.towns in
+  let avail = List.filter (fun s -> List.mem s.location corners) settlements in
+  if (List.length avail) = 0 then
+    ai_look_for_upgrades (state) (num1+1) (num2-1)
+  else
+    let toUpgrade = List.nth avail (Random.int (List.length avail)) in
+    build_city state (toUpgrade.location)
+
 let ai_check_build_city (state: gamestate) (player: player) : gamestate =
   if (get_resource player 2) > 2 && (get_resource player 3) > 1 then
-      (* Build city *) failwith "TODO"
+      (* Build city *)
+      ai_look_for_upgrades state 8 6
   else
     ai_check_build_settlement (state) (player)
 
@@ -692,6 +708,16 @@ let has_dcards_to_play (player: player) : dcard list =
 let ai_play_dcard (state: gamestate) (dcards: dcard list) : gamestate =
   play_dcard state (List.nth dcards (Random.int (List.length dcards)))
 
+let ai_build_or_play (state: gamestate): gamestate =
+  let player = curr_player state in
+  let dcards_to_play = has_dcards_to_play player in
+  if (List.length dcards_to_play) > 0 then
+    (* Play Dcard *)
+    ai_play_dcard state dcards_to_play
+  else
+    (* Build *)
+    a_i_makemove state
+
 let ai_roll_or_play (state: gamestate): gamestate =
   let player = curr_player state in
   let dcards_to_play = has_dcards_to_play player in
@@ -706,17 +732,9 @@ let ai_roll_or_play (state: gamestate): gamestate =
              collect_player_resource state.players state.game_board.tiles rnd in
              change_stage {state with players = playersWResources}
 
-let ai_build_or_play (state: gamestate): gamestate =
-  let player = curr_player state in
-  let dcards_to_play = has_dcards_to_play player in
-  if (List.length dcards_to_play) > 0 then
-    (* Play Dcard *)
-    ai_play_dcard state dcards_to_play
-  else
-    (* Build *)
-    a_i_makemove state
-
-(* Builds a settlement for the AI on tiles with num1 or num2 as the collect_on *)
+(* Builds a settlement for the AI on tiles with num1 or num2 as the collect_on.
+    If there are no tiles or no buildable corners on the returned tiles, search
+    with a higher number. If there are no tiles at all, just return the state *)
 let rec build_settlement_on_num
   (state: gamestate) (num1: int) (num2: int): gamestate =
   if num1 > 12 || num2 < 2 then state
@@ -789,6 +807,6 @@ let ai_start_stage_road (state: gamestate): gamestate =
               build_road state (start,endpt)
             else failwith "Never happens in start stage"
 
-let ai_start_stage (state: gamestate) (isSettlement: bool): gamestate =
-  if isSettlement then ai_start_stage_settlement state
-  else ai_start_stage_road state
+let ai_start_stage (state: gamestate): gamestate =
+  let gs = ai_start_stage_settlement state in
+  ai_start_stage_road gs
