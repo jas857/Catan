@@ -372,7 +372,7 @@ let rec main_repl (gs: gamestate) : gamestate =
   | Start -> main_repl (start_repl gs)
   | Production -> main_repl (prod_repl gs)
   | Build -> main_repl (build_repl gs)
-  | End -> gs
+  | End -> let _ = print_game gs in gs
 
 (* let _ = main_repl trade_gs *)
 let _ = main_repl single_player_gs
