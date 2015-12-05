@@ -316,12 +316,20 @@ let rec trade_repl gs : gamestate =
       (List.nth cmd 2) (List.nth cmd 3) (int_of_string (List.nth cmd 1)))
 
 let rec get_robber_pos () =
+  let _ = print_string_w
+    ("Enter the tile location where you want to move the robber:\n") in
   let tile = read_line () in
   if(String.length tile <> 1) then
-    let _ = print_string_w "Please enter a tile letter of a tile.\n" in get_robber_pos ()
+    let _ = print_string_w "Please enter a letter of a tile.\n" in
+      get_robber_pos ()
   else
   let tile = String.uppercase tile in
-  tile.[0]
+  let tile = tile.[0] in
+  if not(List.mem tile alphabet) then
+    let _ = print_string_w "Please enter a letter of a tile.\n" in
+      get_robber_pos ()
+  else
+    tile
 
 let rec prod_repl (gs : gamestate) : gamestate =
 if (curr_player gs).a_i then
@@ -336,14 +344,14 @@ else
   match cmd with
   |"roll" -> let _ = Random.self_init () in
              let rnd = (((Random.int 6) + 2) + Random.int 6) in
-             if rnd = 7 then
-              let tl = get_robber_pos () in
-              move_robber gs tl
-             else
              let playersWResources =
              collect_player_resource gs.players gs.game_board.tiles rnd in
              let gs = {gs with players = playersWResources} in
              let _ = printf [white;Bold] "You rolled a %d\n" rnd in
+             if rnd = 7 then
+              let tl = get_robber_pos () in
+              move_robber gs tl
+             else
              change_stage gs
 
   |"play" -> (match (match_to_Dcard ()) with

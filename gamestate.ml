@@ -169,6 +169,10 @@ let rec get_pos () =
   else
   let start_tile = String.uppercase start_tile in
   let s_tile = start_tile.[0] in
+  if not(List.mem s_tile alphabet) then
+    let _ = print_string "Please enter a tile letter followed by a number 0-5.\n" in
+      get_pos ()
+  else
   let s_corner = int_of_string (Char.escaped start_tile.[1]) in
   conv s_tile s_corner
 
@@ -792,6 +796,8 @@ let ai_roll_or_play (state: gamestate): gamestate =
     (* Roll *)
     let _ = Random.self_init () in
              let rnd = (((Random.int 6) + 2) + Random.int 6) in
+             let playersWResources =
+             collect_player_resource state.players state.game_board.tiles rnd in
              if rnd = 7 then
               let tiles = state.game_board.tiles in
               let randTile = List.nth tiles (Random.int (List.length tiles)) in
@@ -799,8 +805,6 @@ let ai_roll_or_play (state: gamestate): gamestate =
                           {player with army_size = player.army_size + 1})
               randTile.loc
              else
-             let playersWResources =
-             collect_player_resource state.players state.game_board.tiles rnd in
              change_stage {state with players = playersWResources}
 
 (* Builds a settlement for the AI on tiles with num1 or num2 as the collect_on.

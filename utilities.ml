@@ -3,6 +3,9 @@ type coordinates = (int * int)
 
 type rsrc = int*int*int*int*int
 
+let alphabet = ['A';'B';'C';'D';'E';'F';'G';'H';'I';'J';'K';'L';'M';'N';'O';
+                'P';'Q';'R';'S']
+
 let shuffle d =
   let _ = Random.self_init() in
   let nd = List.map (fun c -> (Random.bits (), c)) d in

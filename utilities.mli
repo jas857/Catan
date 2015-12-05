@@ -8,6 +8,8 @@ type color =
 
 type rsrc = int*int*int*int*int
 
+val alphabet : char list
+
 val oob : coordinates list
 
 val corner : char -> (int*int)
