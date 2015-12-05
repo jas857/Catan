@@ -27,3 +27,5 @@ val get_cmd : unit -> string
 val is_int : string -> bool
 
 val split_char : char -> string -> string list
+
+val in_bounds : coordinates -> bool

@@ -84,3 +84,7 @@ let rec split_char sep str =
       split_char sep (String.sub str (i+1) (String.length str - i - 1))
   with Not_found ->
     [str]
+
+let in_bounds c =
+  let (x,y) = c in
+  (x>=0) && (y>=0) && (x<12) && (y<6) && not (List.mem c oob)
