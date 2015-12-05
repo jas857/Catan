@@ -161,26 +161,22 @@ let rec is_overlap_road (road: coordinates * coordinates)
         then true
         else is_overlap_road road t
 
+let rec get_pos () =
+  let start_tile = read_line () in
+  if(String.length start_tile <> 2) then
+    let _ = print_string "Please enter a tile letter followed by a number 0-5.\n" in get_pos ()
+  else let s_tile = start_tile.[0] in
+  let s_corner = int_of_string (Char.escaped start_tile.[1]) in
+  conv s_tile s_corner
+
 let rec get_road_info () :(coordinates * coordinates) =
   let _ = print_string
   "Please enter the point you would like to start your road on: " in
-  let start_tile = read_line () in
-  if(String.length start_tile <> 2) then let _ =
-  print_string "unacceptable input" in get_road_info ()
-  else let s_tile = start_tile.[0] in
-  let s_corner = int_of_string (Char.escaped start_tile.[1]) in
+  let start = get_pos () in
   let _ = print_string
   "Please enter the point you would like to end your road on: " in
-  let end_tile = read_line () in
-  if(String.length end_tile <> 2) then let _ =
-  print_string "unacceptable input" in get_road_info ()
-  else let e_tile = end_tile.[0] in
-  let e_corner = int_of_string (Char.escaped end_tile.[1]) in
-
-
-  let startTileCoor = (conv s_tile s_corner) in
-  let endTileCoor = (conv e_tile e_corner) in
-  (startTileCoor, endTileCoor)
+  let last = get_pos () in
+  (start, last)
 
 (*says if road can be built at given coordinates*)
 let can_build_road (startTileCoor: coordinates)
@@ -217,45 +213,158 @@ let rec settlement_helper (tiles: tile list)
   then {h with towns = (clr, 1)::(h.towns)}::(settlement_helper t coor clr)
   else h::(settlement_helper t coor clr)
 
+let rec get_settlement_info () : coordinates =
+  let _ = print_string "Please enter the point you would like to build your settlement on: " in
+  get_pos ()
+
 let can_build_settlement (gs: gamestate) (coor: coordinates): bool =
   let adjs = adjacents coor in
   let blocks_build (pl:player) =
     any (fun t -> List.mem t.location adjs) pl.towns in
   not (any blocks_build gs.players)
 
+let location_empty (gs: gamestate) (coor: coordinates) : bool =
+  let town_on_loc (plyr: player) =
+    any (fun t -> t.location = coor) plyr.towns in
+  not (any town_on_loc gs.players)
 
 let rec build_settlement (gs: gamestate) ( coor: coordinates): gamestate =
   let currentPlayer = match_color gs.playerturn gs.players in
-  let updatedPlayer = {currentPlayer with
+  let tempPlayer = {currentPlayer with
   settlements_left = currentPlayer.settlements_left - 1;
   towns = {location = coor; pickup = 1}::(currentPlayer.towns)} in
+
+  let tempPlayer2 = change_resource tempPlayer 0
+  ((get_resource tempPlayer 0) - 1) in
+  (*change player resources brick*)
+  let tempPlayer3 = change_resource tempPlayer 1
+  ((get_resource tempPlayer2 1) - 1) in
+  (*change player resource wool*)
+  let tempPlayer4 = change_resource tempPlayer 3
+  ((get_resource tempPlayer3 3) - 1) in
+  (*change player resource grain*)
+  let updatedPlayer = change_resource tempPlayer 4
+  ((get_resource tempPlayer4 4) - 1) in
+  (*change player resource lumber*)
+
   let newPlayerList = change_player_list gs.players updatedPlayer in
   let updatedBoard =
   {gs.game_board with tiles =
   settlement_helper gs.game_board.tiles coor currentPlayer.color} in
   {gs with players = newPlayerList; game_board = updatedBoard}
 
+
+
+(*search for the old settlement in the player and replace with city*)
+let rec city_helper (towns: town list)
+(coor:coordinates) : town list =
+  match towns with
+  | [] -> []
+  | h::t -> if(h.location = coor) then {location = coor; pickup = 2}::t
+            else h::(city_helper t coor)
+
+let rec get_city_info (): (coordinates) =
+  let _ = print_string
+  "Please enter the letter of the tile
+  where you would like to build your city: " in
+  let start_tile = read_line() in
+  if(String.length start_tile <> 1) then let _ =
+  print_string "unacceptable input\n" in get_city_info ()
+  else let s_tile = start_tile.[0] in
+
+  let _ = print_string "Please enter the number of the tile
+  corner you would like to build your settlement on: " in
+  let start_corner = read_line() in
+
+  if(not (is_int start_corner))
+    then let _ = print_string "unacceptable input\n" in get_city_info ()
+  else let s_corner = int_of_string start_corner in
+  conv s_tile s_corner
+
+(*checks to see if we can build a city at the given location*)
+let can_build_city (gs: gamestate) (coor: coordinates) : bool =
+  let currentPlayer = match_color gs.playerturn gs.players in
+  not (List.mem {location = coor ; pickup = 1} currentPlayer.towns)
+
+
+(*builds the city by updating the tiles and updating the player*)
+let rec build_city (gs: gamestate) (coor: coordinates) : gamestate =
+  let currentPlayer = match_color gs.playerturn gs.players in
+  let tempPlayer = {currentPlayer with
+  towns = (city_helper currentPlayer.towns coor)} in
+  let tempPlayer2 = change_resource tempPlayer 3
+  ((get_resource tempPlayer 3) - 2) (*change player resources grain*) in
+  let updatedPlayer =
+    change_resource tempPlayer2 2 ((get_resource tempPlayer2 2) - 3) in
+  (*change player resource ore*)
+
+  let newPlayerList = change_player_list gs.players updatedPlayer in
+  let updatedBoard =
+  {gs.game_board with tiles =
+  settlement_helper gs.game_board.tiles coor currentPlayer.color} in
+  {gs with players = newPlayerList; game_board = updatedBoard}
+
+
+let pick_dcard gs =
+  let tempPlayer = match_color gs.playerturn gs.players in
+  let temp = change_player_list gs.players
+  {tempPlayer with dcards =
+  (List.hd gs.game_board.dcards)::(tempPlayer.dcards)} in
+  {gs with players = temp;game_board =
+  {gs.game_board with dcards = List.tl gs.game_board.dcards}}
+
+let pick_dcard_subtract_cost (gs:gamestate): gamestate =
+  let tempGs = pick_dcard gs in
+  let currentPlayer = match_color gs.playerturn gs.players in
+
+  let tempPlayer = change_resource currentPlayer 1
+  ((get_resource currentPlayer 1) - 1) in
+  (*change player resources wool*)
+  let tempPlayer2 = change_resource tempPlayer 2
+  ((get_resource tempPlayer 2) - 1) in
+  (*change player resource ore*)
+  let updatedPlayer = change_resource tempPlayer2 3
+  ((get_resource tempPlayer2 3) - 1) in
+  (*change player resource grain*)
+
+  let newPlayerList = change_player_list gs.players updatedPlayer in
+  {tempGs with players = newPlayerList}
+
+
+(*handles all of the building, checking, and inputting*)
 let rec build (state: gamestate) (input:string): gamestate =
   let player = match_color (state.playerturn) (state.players) in
   (match String.lowercase input with
   |"road" -> if (get_resource player 0) > 0 && (get_resource player 4) > 0
-          then failwith "TODO"(* BUILD ROAD *)
-          else print_endline ("Insufficient resources"); state
+                then failwith "TODO"(* BUILD ROAD *)
+             else print_endline ("Insufficient resources"); state
   |"settlement" -> if (get_resource player 0) > 0 &&
              (get_resource player 1) > 0 &&
              (get_resource player 3) > 0 &&
              (get_resource player 4) > 0
-             then failwith "TODO"(* BUILD SETTLEMENT *)
-             else print_endline ("Insufficient resources"); state
+             then let sCoor = get_settlement_info () in (* BUILD SETTLEMENT *)
+              if(can_build_settlement state sCoor)
+              (*check if settlement can be built*)
+                then (build_settlement state sCoor)
+              else let _ = print_string "cannot buil a settlement here" in state
+              (*if cannot build a settlement then return original gamestate*)
+
+             else let _ = print_endline ("Insufficient resources") in state
+
   |"city" -> if (get_resource player 3) > 1 &&
            (get_resource player 2) > 2
-            then failwith "TODO"(* BUILD CITY *)
-            else print_endline ("Insufficient resources"); state
+            then let cityCoor = get_city_info () in
+              if (can_build_city state cityCoor) (*check if can build city at coor*)
+                  then (build_city state cityCoor) (*build city if can*)
+              else let _ = print_string "cannot build a city here" in
+              state (*if cannot build city then return original gamestate*)
+
+            else let _ = print_endline ("Insufficient resources") in state
   |"dcard" -> if (get_resource player 1) > 0 &&
            (get_resource player 2) > 0 &&
            (get_resource player 3) > 0
-            then failwith "TODO"(* BUILD DCARD *)
-            else print_endline ("Insufficient resources"); state
+            then (pick_dcard_subtract_cost state) (*change the resources*)
+            else let _ =print_endline ("Insufficient resources") in state
   | _ -> state)
 
 let play_road_building (state:gamestate) (r1:(coordinates *coordinates))
@@ -322,15 +431,36 @@ let play_dcard (state: gamestate) (card: dcard) : gamestate =
                                   play_road_building state r1 r2))
   else let _ = print_endline "You do not have that dcard" in state
 
-let pick_dcard gs =
-  let tempPlayer = match_color gs.playerturn gs.players in
-  let temp = change_player_list gs.players
-  {tempPlayer with dcards =
-  (List.hd gs.game_board.dcards)::(tempPlayer.dcards)} in
-  {gs with players = temp;game_board =
-  { gs.game_board with dcards = List.tl gs.game_board.dcards}}
-
 let trade gs = failwith "TODO"
+
+(* Add amt of the specified resource to player. *)
+let change_resource_for_distr (plyr: player) (env:environment)
+(amt: int) : player =
+  match (env, plyr.resources) with
+  | Hills, (a,x,y,z,w) -> {plyr with resources = (amt + a,x,y,z,w)}
+  | Pasture, (x,a,y,z,w) -> {plyr with resources = (x,amt + a,y,z,w)}
+  | Mountains, (x,y,a,z,w) -> {plyr with resources = (x,y,amt + a,z,w)}
+  | Fields, (x,y,z,a,w) -> {plyr with resources = (x,y,z,amt + a,w)}
+  | Forest, (x,y,z,w,a) -> {plyr with resources = (x,y,z,w,amt + a)}
+  | Desert, (a,x,y,z,w) -> plyr
+
+(* Distribute the resources for a tile based on its towns field.
+Return a new player list with updated resource amounts.*)
+let rec dist_resources (players:player list)
+ (towns:(color * int) list) (env:environment): player list =
+  match towns with
+  | [] -> players
+  |(b, a)::t -> let tempPlayer = match_color b players in
+                let newPlayers = change_player_list players
+                (change_resource_for_distr tempPlayer env a) in
+                dist_resources newPlayers t env
+
+(* Collect resources from all tiles for all players, return a new
+player list with updated resource amounts. *)
+let rec collect_player_resource (players: player list)
+(tiles: tile list) (roll: int): player list =
+  let ts = (List.filter (fun t -> t.collect_on=roll) tiles) in
+  List.fold_left (fun (pl:player list) (t:tile) -> dist_resources pl t.towns t.env) players ts
 
 (* AI Functions *)
 
@@ -370,7 +500,7 @@ let ai_update_directions (state: gamestate) (plyr: player) : unit =
 
 let can_move (state: gamestate) (coord: coordinates): bool =
   (can_build_road (match_color state.playerturn state.players).ai_vars.curpos coord state)
-  && (*can_build coord &&*) not(List.mem coord oob)
+  && location_empty state coord && not(List.mem coord oob)
 (* Checks if the coordinate has a road coming from curpos into it. Also checks if there is a town there. Also checks if it is off the board *)
 
 (* AI move position to build road *)
@@ -538,15 +668,81 @@ let rec move_position (state: gamestate) (plyr: player)  : gamestate =
                   let plyr = change_resource plyr 4 ((get_resource plyr 4)+1) in
                   change_player state plyr
 
-let a_i_makemove (state: gamestate): gamestate =
-  let player = match_color state.playerturn state.players in
+let ai_check_build_dcard (state: gamestate) (player: player) : gamestate =
+  if (get_resource player 1) > 0 && (get_resource player 2) > 0 &&
+      (get_resource player 3) > 0 then
+      (* Build Dcard *) failwith "TODO"
+  else
+    state
+
+let ai_check_build_road (state: gamestate) (player: player) : gamestate =
   if (get_resource player 0) > 0 && (get_resource player 4) > 0 then
+    (* Build road *)
     let player = change_resource player 0 ((get_resource player 0) - 1) in
     let player = change_resource player 4 ((get_resource player 4) - 1) in
     let gs = move_position state player in
     let plyr = match_color gs.playerturn gs.players in
+    (* If no road was built *)
     if (get_resource player 0) = (get_resource plyr 0) then
-      failwith "Build other stuff"
+      ai_check_build_dcard state player
     else
       gs
-  else failwith "Build other stuff"
+  else
+    ai_check_build_dcard state player
+
+let ai_check_build_settlement (state: gamestate) (player: player) : gamestate =
+  if (get_resource player 0) > 0 && (get_resource player 1) > 0 &&
+      (get_resource player 3) > 0 && (get_resource player 4) > 0 then
+      (* Build Settlement *) failwith "TODO"
+  else
+    ai_check_build_road state player
+
+let ai_check_build_city (state: gamestate) (player: player) : gamestate =
+  if (get_resource player 2) > 2 && (get_resource player 3) > 1 then
+      (* Build city *) failwith "TODO"
+  else
+    ai_check_build_settlement (state) (player)
+
+let a_i_makemove (state: gamestate): gamestate =
+  (* AI builds things in this order:
+      1. City
+      2. Settlement
+      3. Road
+      4. Dcard *)
+  let player = match_color state.playerturn state.players in
+  ai_check_build_city state player
+
+(* Returns all playable Dcards *)
+let has_dcards_to_play (player: player) : dcard list =
+  List.fold_left (fun lst d ->
+    match d with Knight -> d::lst | Progress_Card _ -> d::lst | _ -> lst)
+  []
+  player.dcards
+
+(* Pick a random playable dcard and play it *)
+let ai_play_dcard (state: gamestate) (dcards: dcard list) : gamestate =
+  play_dcard state (List.nth dcards (Random.int (List.length dcards)))
+
+let ai_roll_or_play (state: gamestate): gamestate =
+  let player = match_color state.playerturn state.players in
+  let dcards_to_play = has_dcards_to_play player in
+  if (List.length dcards_to_play) > 0 then
+    (* Play Dcard *)
+    ai_play_dcard state dcards_to_play
+  else
+    (* Roll *)
+    let _ = Random.self_init () in
+             let rnd = (((Random.int 6) + 2) + Random.int 6) in
+             let playersWResources =
+             collect_player_resource state.players state.game_board.tiles rnd in
+             change_stage {state with players = playersWResources}
+
+let ai_build_or_play (state: gamestate): gamestate =
+  let player = match_color state.playerturn state.players in
+  let dcards_to_play = has_dcards_to_play player in
+  if (List.length dcards_to_play) > 0 then
+    (* Play Dcard *)
+    ai_play_dcard state dcards_to_play
+  else
+    (* Build *)
+    a_i_makemove state

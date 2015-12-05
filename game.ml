@@ -15,7 +15,7 @@ type pixrow = pixel list
 type pixboard = pixrow list
 
 (* Behaves like normal print_string. *)
-let print_string_w s = print_string [white;Bold;on_black] s
+let print_string_w s = print_string [white;on_black] s
 
 let string_to_pix_st s st =
   let cs = string_to_char_list s in
@@ -229,6 +229,7 @@ let test_gs = {playerturn=Red;
 let _ = print_string [white;Bold] "This is a text prompt asking for some input.\n" *)
 (* End print testing *)
 
+
 (* Add amt of the specified resource to player. *)
 let change_resource_for_distr (plyr: player) (env:environment)
 (amt: int) : player =
@@ -256,7 +257,8 @@ player list with updated resource amounts. *)
 let rec collect_player_resource (players: player list)
 (tiles: tile list) (roll: int): player list =
   let ts = (List.filter (fun t -> t.collect_on=roll) tiles) in
-  List.fold_left (fun (pl:player list) (t:tile) -> dist_resources pl t.towns t.env) players ts
+  List.fold_left (fun (pl:player list) (t:tile) -> dist_resources
+    pl t.towns t.env) players ts
 
 let rec match_to_Dcard () =
   let _ = print_string_w "Which dcard will you play?" in
@@ -269,9 +271,6 @@ let rec match_to_Dcard () =
   |"exit" -> None
   | _ -> let _ = print_string_w "cannot play this at the moment"
   in match_to_Dcard ()
-
-
-
 
 let rec rollOrPlay (cmd: string) (gs : gamestate) : gamestate =
   let lowercaseCmd = String.lowercase cmd in
@@ -308,35 +307,18 @@ let rec buildOrPlay (cmd: string) (gs : gamestate) : gamestate =
 
   | _ -> gs
 
-
-let rec get_settlement_info () : coordinates =
-  let _ = print_string_w "Please enter the letter of the tile you would like to build your settlement on: " in
-  let start_tile = String.uppercase (read_line ()) in
-  if(String.length start_tile <> 1) then
-    let _ = print_string_w "unacceptable input" in
-    get_settlement_info ()
-  else let s_tile = start_tile.[0] in
-
-  let _ = print_string_w "Please enter the number of the tile
-  corner you would like to build your settlement on: " in
-  let start_corner = read_line() in
-  if(not (is_int start_corner)) then let _ =
-  print_string_w "unacceptable input" in get_settlement_info ()
-  else let s_corner = int_of_string start_corner in
-  (conv s_tile s_corner)
-
 let rec main_repl (gs: gamestate) : gamestate =
   match gs.game_stage with
   | Start -> let _ = print_game gs (*prints game*) in
              let coor = get_settlement_info () in (*get settlement coordinates*)
              if( not (can_build_settlement gs coor))
-               then let _ = print_string_w "invalid inputs, redo turn" in
+               then let _ = print_string_w "Cannot build a settlement there, redo turn" in
                 main_repl gs (*wrong input*)
              else let gs1 = build_settlement gs coor in(*correct input*)
              let _ = print_game gs1 in
              let (s, e) = get_road_info () in (*get road coordinates*)
              if( not (can_build_road s e gs1)) then
-             let _ = print_string_w "invalid inputs, redo turn" in main_repl gs
+             let _ = print_string_w "Cannot build a road there, redo turn" in main_repl gs
              else main_repl (build_road gs1 (s,e))
              (*build road then change turn*)
   | Production -> let _ = print_string_w
