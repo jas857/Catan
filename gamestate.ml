@@ -279,7 +279,7 @@ let rec build_city (gs: gamestate) (coor: coordinates) : gamestate =
   let tempPlayer = {currentPlayer with
   towns = (city_helper currentPlayer.towns coor)} in
   let tempPlayer = change_resources tempPlayer (0,0,-3,-2,0) in
-  let tempPlayer2 = {tempPlayer with victory_points = tempPlayer.victory_points + 1}
+  let tempPlayer2 = {tempPlayer with victory_points = tempPlayer.victory_points + 1} in
   let gs = change_player gs tempPlayer2 in
   {gs with game_board = {gs.game_board with
     tiles = settlement_helper gs.game_board.tiles coor currentPlayer.color}}
