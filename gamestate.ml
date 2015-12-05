@@ -210,12 +210,9 @@ let rec settlement_helper (tiles: tile list)
  (coor: coordinates) (clr: color) : tile list =
   match tiles with
   | [] -> []
-  | h::t -> if(((conv h.loc 0) = coor) ||
-    ((conv h.loc 1) = coor) || ((conv h.loc 2) = coor) ||
-    ((conv h.loc 3) = coor) || ((conv h.loc 4) = coor) ||
-    ((conv h.loc 5) = coor))
-  then {h with towns = (clr, 1)::(h.towns)}::(settlement_helper t coor clr)
-  else h::(settlement_helper t coor clr)
+  | h::t -> if List.mem coor (corners h)
+    then {h with towns = (clr, 1)::(h.towns)}::(settlement_helper t coor clr)
+    else h::(settlement_helper t coor clr)
 
 let rec get_settlement_info () : coordinates =
   let _ = print_string "Please enter the point you would like to build your settlement on: " in
@@ -368,7 +365,7 @@ let play_dcard (state: gamestate) (card: dcard) : gamestate =
   let player = {player with dcards = (remove_from_list player.dcards card)} in
   (match card with
   | Knight -> let _ = print_string
-  "Please enter the letter of the tile you would like to move the robber to: " in
+  "Please enter the letter of the tile you would like to move the robber to: \n" in
   let input = read_line() in
   if (Bytes.length input) > 1
   then (let _ = print_endline "Invalid tile location" in state )

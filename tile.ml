@@ -67,3 +67,6 @@ let initialize_tiles () =
   let shuffNum = shuffle numbers in
   let shuffEnv = shuffle envs in
   make_tiles [] shuffNum shuffEnv '@'
+
+let corners t =
+  List.map (fun n-> conv t.loc n) [0;1;2;3;4;5]

@@ -26,27 +26,27 @@ let string_to_pix s =
   string_to_pix_st s [white; Bold; on_black]
 
 let board_start =[
-"               X---X    Current turn:                  ";
-"              /     \\                                  ";
-"         X---X   C   X---X                             ";
-"        /     \\     /     \\                            ";
-"   X---X   B   X---X   G   X---X                       ";
-"  /     \\     /     \\     /     \\                      ";
-" 0   A   X---X   F   X---X   L   X                     ";
-"  \\     /     \\     /     \\     /        Legend        ";
-"   X---X   E   X---X   K   X---X          5---4        ";
-"  /     \\     /     \\     /     \\        /     \\       ";
-" X   D   X---X   J   X---X   P   X      0   L   3      ";
-"  \\     /     \\     /     \\     /        \\     /       ";
-"   X---X   I   X---X   O   X---X          1---2        ";
-"  /     \\     /     \\     /     \\              Rates   ";
-" X   H   X---X   N   X---X   S   X  Brick:             ";
-"  \\     /     \\     /     \\     /   Wool:              ";
-"   X---X   M   X---X   R   X---X    Ore:               ";
-"        \\     /     \\     /         Grain:             ";
-"         X---X   Q   X---X          Lumber:            ";
-"              \\     /                                  ";
-"               X---X                                   "]
+"               X---X    Current turn:                            ";
+"              /     \\                                            ";
+"         X---X   C   X---X          Hills:     X       Legend    ";
+"        /     \\     /     \\         Pasture:   X        5---4    ";
+"   X---X   B   X---X   G   X---X    Mountains: X       /     \\   ";
+"  /     \\     /     \\     /     \\   Fields:    X      0   L   3  ";
+" X   A   X---X   F   X---X   L   X  Forest:    X       \\     /   ";
+"  \\     /     \\     /     \\     /   Desert:    X        1---2    ";
+"   X---X   E   X---X   K   X---X                                 ";
+"  /     \\     /     \\     /     \\                                ";
+" X   D   X---X   J   X---X   P   X                               ";
+"  \\     /     \\     /     \\     /                                ";
+"   X---X   I   X---X   O   X---X                                 ";
+"  /     \\     /     \\     /     \\                                ";
+" X   H   X---X   N   X---X   S   X             Rates             ";
+"  \\     /     \\     /     \\     /   Brick:                       ";
+"   X---X   M   X---X   R   X---X    Wool:                        ";
+"        \\     /     \\     /         Ore:                         ";
+"         X---X   Q   X---X          Grain:                       ";
+"              \\     /               Lumber:                      ";
+"               X---X                                             "]
 
 
 let board_start = List.map string_to_pix board_start
@@ -141,21 +141,33 @@ let print_port pb (p:port) =
             |_ -> failwith "Unmatched port" in
   write_board pb (grid_to_board p.location) str
 
+
+let print_biomes pb =
+  let legend = [
+   ([('H',[yellow; on_black])],2);
+   ([('P',[green; on_black])],3);
+   ([('M',[white; on_black])],4);
+   ([('F',[yellow; on_black])],5);
+   ([('f',[green; on_black])],6);
+   ([('d',[yellow; on_black])],7)] in
+  List.fold_left (fun p (s,y) -> write_board p (47,y) s) pb legend
+
 (* Initialize a new printed board with tile info and grid.*)
 (* pixboard -> board -> pixboard *)
 let print_board b =
   let pb = board_start in
   let pb = List.fold_left print_tile pb b.tiles in
+  let pb = print_biomes pb in
   List.fold_left print_port pb b.ports
 
 (* Create a copy of the board with the player's resources and trade rates
 printed in the correct place. *)
 (* pixboard -> player -> pixboard *)
 let print_resources pb (p:player) =
-  (* resources start at 14 44 *)
+  (* resources start at 15 44 *)
   let (b,w,o,g,l)=p.resources in
   let (be,we,oe,ge,le)=p.exchange in
-  let resources = [(14,b,be);(15,w,we);(16,o,oe);(17,g,ge);(18,l,le)] in
+  let resources = [(15,b,be);(16,w,we);(17,o,oe);(18,g,ge);(19,l,le)] in
   let print_one pb (y,r,e) =
     let gap = if r<10 then "   " else "  " in
     let s = string_to_pix ((string_of_int r) ^ gap ^ (string_of_int e)) in
@@ -289,6 +301,7 @@ let rec start_repl gs =
 (* Perform the trade phase of the game. Trade command format:
 "trade X brick wool" will spend at most X bricks to purchase wool. *)
 let rec trade_repl gs : gamestate =
+  let _ = print_game gs in
   let _ = print_string_w "Please enter a command in the following format, or \"end\" to end trading: \"trade [int] [resource to spend] [resource to purchase]\"\n" in
   let cmd = split_char ' ' (get_cmd ()) in
   if List.nth cmd 0 = "end" then change_stage gs else
@@ -298,10 +311,13 @@ let rec trade_repl gs : gamestate =
     change_stage (trade gs
       (List.nth cmd 2) (List.nth cmd 3) (int_of_string (List.nth cmd 1)))
 
-let rec prod_repl (cmd: string) (gs : gamestate) : gamestate =
+let rec prod_repl (gs : gamestate) : gamestate =
   let gs = update_exchanges gs in
-  let lowercaseCmd = String.lowercase cmd in
-  match lowercaseCmd with
+  let _ = print_game gs in
+  let _ = print_string_w
+    "type roll or play to roll the die or play a development card.\n" in
+  let cmd = (get_cmd ()) in
+  match cmd with
   |"roll" -> let _ = Random.self_init () in
              let rnd = (((Random.int 6) + 2) + Random.int 6) in
              let playersWResources =
@@ -313,7 +329,7 @@ let rec prod_repl (cmd: string) (gs : gamestate) : gamestate =
   |"play" -> (match (match_to_Dcard ()) with
                 | Some(x) -> (let ans = play_dcard gs x in
                               if(ans = gs)
-                                then prod_repl "play" gs
+                                then prod_repl gs
                               else ans)
                 | None -> gs)
   | _ -> gs
@@ -330,7 +346,7 @@ let rec build_repl (gs : gamestate) : gamestate =
   |"play" -> (match (match_to_Dcard ()) with
                 | Some(x) -> let ans = play_dcard gs x in
                               if(ans = gs)
-                                then prod_repl "play" gs
+                                then prod_repl gs
                               else ans
                 | None -> gs)
   |"end" -> change_stage gs
@@ -340,12 +356,8 @@ let rec build_repl (gs : gamestate) : gamestate =
 let rec main_repl (gs: gamestate) : gamestate =
   match gs.game_stage with
   | Start -> main_repl (start_repl gs)
-  | Production -> let _ = print_string_w
-            "type roll or play: roll the die or play a development card.\n" in
-            let cmd = get_cmd () in
-             main_repl (prod_repl cmd gs)
-  | Trade ->let _ = print_game gs in
-            main_repl (trade_repl gs)
+  | Production -> main_repl (prod_repl gs)
+  | Trade -> main_repl (trade_repl gs)
   | Build -> main_repl (build_repl gs)
   | End -> gs
 

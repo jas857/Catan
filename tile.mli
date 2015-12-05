@@ -25,3 +25,6 @@ val rebuild_tile_list : tile list -> tile -> tile list
 val remove_robber : tile list -> tile
 (* Generates the randomly placed tile list that makes up the board*)
 val initialize_tiles : unit -> tile list
+
+(* Return a list of the coordinates which are on this tile. *)
+val corners : tile -> coordinates list
