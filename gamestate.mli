@@ -27,9 +27,6 @@ val change_turn : gamestate -> gamestate
 (* Change the stage of the game *)
 val change_stage : gamestate -> gamestate
 
-(*return a gamestate with the End stage*)
-val game_complete : gamestate -> gamestate
-
 (* Add a town to the list of towns on a tile *)
 val add_town : gamestate -> tile -> (color*int) -> gamestate
 (* play a given dcard in the current gamestate*)
