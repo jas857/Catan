@@ -184,8 +184,8 @@ let rec get_road_info () :(coordinates * coordinates) =
 (*says if road can be built at given coordinates*)
 let can_build_road (fst: coordinates)
 (lst: coordinates) (state: gamestate) : bool =
-  let ((a,b),(x,y)) = (fst,lst) in
-  let diff = (x-a,y-b) in
+  (* let ((a,b),(x,y)) = (fst,lst) in
+  let diff = (x-a,y-b) in *)
   let currentPlayer = curr_player state in
   (((is_valid_build_road fst currentPlayer)
   ||(is_valid_build_road lst currentPlayer))
@@ -243,7 +243,7 @@ let update_exchanges gs (pl:player) =
     if any (fun t -> t.location = a.location) b.towns then
       {b with exchange= min5 a.exchange b.exchange}
     else b in
-  List.fold_left check_port {pl with exchanges=(4,4,4,4,4)} gs.game_board.ports
+  List.fold_left check_port {pl with exchange=(4,4,4,4,4)} gs.game_board.ports
 
 let rec build_settlement (gs: gamestate) (coor: coordinates)
                          (free: bool): gamestate =
@@ -669,10 +669,9 @@ let rec move_position (state: gamestate) (plyr: player)  : gamestate =
 let ai_check_build_dcard (state: gamestate) (player: player) : gamestate =
   if (get_resource player 1) > 0 && (get_resource player 2) > 0 &&
       (get_resource player 3) > 0 then
-      (* Build Dcard *) failwith "TODO"
+      pick_dcard state
   else
     state
-
 let ai_check_build_road (state: gamestate) (player: player) : gamestate =
   if (get_resource player 0) > 0 && (get_resource player 4) > 0 then
     (* Build road *)
@@ -743,3 +742,80 @@ let ai_build_or_play (state: gamestate): gamestate =
   else
     (* Build *)
     a_i_makemove state
+
+(* Builds a settlement for the AI on tiles with num1 or num2 as the collect_on *)
+let rec build_settlement_on_num
+  (state: gamestate) (num1: int) (num2: int): gamestate =
+  if num1 > 12 || num2 < 2 then state
+  else
+  let tiles = List.filter
+    (fun tile -> tile.collect_on = num1 || tile.collect_on = num2)
+    state.game_board.tiles in
+  let rec match_tiles (tile_lst: tile list): gamestate =
+  (match tile_lst with
+  | h::t -> if can_build_settlement state (conv h.loc 0) then
+              let state = build_settlement state (conv h.loc 0) true in
+              let player = curr_player state in
+              let _ = player.ai_vars.curpos <- (conv h.loc 0) in
+              {state with players = change_player_list state.players player}
+            else if can_build_settlement state (conv h.loc 1) then
+              let state = build_settlement state (conv h.loc 1) true in
+              let player = curr_player state in
+              let _ = player.ai_vars.curpos <- (conv h.loc 1) in
+              {state with players = change_player_list state.players player}
+            else if can_build_settlement state (conv h.loc 2) then
+              let state = build_settlement state (conv h.loc 2) true in
+              let player = curr_player state in
+              let _ = player.ai_vars.curpos <- (conv h.loc 2) in
+              {state with players = change_player_list state.players player}
+            else if can_build_settlement state (conv h.loc 3) then
+              let state = build_settlement state (conv h.loc 3) true in
+              let player = curr_player state in
+              let _ = player.ai_vars.curpos <- (conv h.loc 3) in
+              {state with players = change_player_list state.players player}
+            else if can_build_settlement state (conv h.loc 4) then
+              let state = build_settlement state (conv h.loc 4) true in
+              let player = curr_player state in
+              let _ = player.ai_vars.curpos <- (conv h.loc 4) in
+              {state with players = change_player_list state.players player}
+            else if can_build_settlement state (conv h.loc 5) then
+              let state = build_settlement state (conv h.loc 5) true in
+              let player = curr_player state in
+              let _ = player.ai_vars.curpos <- (conv h.loc 5) in
+              {state with players = change_player_list state.players player}
+          else match_tiles t
+  | [] -> build_settlement_on_num state (num1+1) (num2-1)) in
+  match_tiles tiles
+
+let ai_start_stage_settlement (state: gamestate): gamestate =
+  build_settlement_on_num state 8 6
+
+let ai_start_stage_road (state: gamestate): gamestate =
+  let plyr = curr_player state in
+  let start = plyr.ai_vars.curpos in
+  if can_build_road (start) (fst (start) + 1, snd (start)) state then
+      (* +X *)
+        let endpt = (fst (start) + 1, snd (start)) in
+          build_road state (start,endpt)
+      else
+        if can_build_road (start) (fst (start) - 1, snd (start)) state then
+        (* -X *)
+          let endpt = (fst (start) - 1, snd (start)) in
+          build_road state (start,endpt)
+        else
+          if (fst (start) mod 2 = 0) then
+            if can_build_road (start) (fst (start) + 1, snd (start) + 1) state  then
+              (* +X, +Y *)
+              let endpt = (fst (start) + 1, snd (start) + 1) in
+              build_road state (start,endpt)
+            else failwith "Never happens in start stage"
+          else
+            if can_build_road (start) (fst (start) - 1, snd (start) - 1) state  then
+              (* -X, -Y *)
+              let endpt = (fst (start) - 1, snd (start) - 1) in
+              build_road state (start,endpt)
+            else failwith "Never happens in start stage"
+
+let ai_start_stage (state: gamestate) (isSettlement: bool): gamestate =
+  if isSettlement then ai_start_stage_settlement state
+  else ai_start_stage_road state
