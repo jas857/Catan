@@ -373,10 +373,10 @@ let game_complete (gs:gamestate) =
   let _ = print_game gs in
   let winner = gs.playerturn in
   match winner with
-  |Red -> let _ = print_string "Congratulations Red You Have Been Victorious!" in {gs with game_stage = End}
-  |Blue -> let _ = print_string "Congratulations Blue You Have Been Victorious!" in {gs with game_stage = End}
-  |White -> let _ = print_string "Congratulations White You Have Been Victorious!" in {gs with game_stage = End}
-  |Orange -> let _ = print_string "Congratulations Orange You Have Been Victorious!" in {gs with game_stage = End}
+  |Red -> let _ = print_string_w "Congratulations Red You Have Been Victorious!" in {gs with game_stage = End}
+  |Blue -> let _ = print_string_w "Congratulations Blue You Have Been Victorious!" in {gs with game_stage = End}
+  |White -> let _ = print_string_w "Congratulations White You Have Been Victorious!" in {gs with game_stage = End}
+  |Orange -> let _ = print_string_w "Congratulations Orange You Have Been Victorious!" in {gs with game_stage = End}
 
 (*returns true if a player has won*)
 let rec hasWon (players: player list): bool =
