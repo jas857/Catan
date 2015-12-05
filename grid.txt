@@ -1,9 +1,9 @@
-               X - X 7
+               X - X    Current turn:
               /     \
          2 - 2   C   3 - 3 9
         /     \     /     \
    3 - X   B   X - X   G   X - 3 10
-  /     \     /     \     /     \     color's turn
+  /     \     /     \     /     \
  0   A   X - X   F   X - X   L   3 11
   \     /     \     /     \     /        Legend
    X - X   E   X - X   K   X - X          5 - 4

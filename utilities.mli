@@ -6,6 +6,8 @@ type color =
   | Red | Blue | White | Orange
 (* find the corner coordinates of the tile at a location given by a char*)
 
+type rsrc = int*int*int*int*int
+
 val oob : coordinates list
 
 val corner : char -> (int*int)
@@ -23,3 +25,5 @@ val any : ('a -> bool) -> 'a list -> bool
 val get_cmd : unit -> string
 
 val is_int : string -> bool
+
+val split_char : char -> string -> string list

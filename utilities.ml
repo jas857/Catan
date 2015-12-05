@@ -1,6 +1,8 @@
 
 type coordinates = (int * int)
 
+type rsrc = int*int*int*int*int
+
 let shuffle d =
   let _ = Random.self_init() in
   let nd = List.map (fun c -> (Random.bits (), c)) d in
@@ -30,8 +32,8 @@ let corner t =
     |'S' -> (8, 4)
     | _ -> failwith "OutOfBoundsException"
 
-let oob = [(3,0); (4,0); (4,1); (4,2); (5,0); (5,1); (5,2); (5,3); (5,4); (0,8);
-           (0,9); (0,10); (0,11); (1,10); (1,11); (2,11)]
+let oob = [(0,3); (0,4); (1,4); (2,4); (0,5); (1,5); (2,5); (3,5); (4,5); (8,0);
+           (9,0); (10,0); (11,0); (10,1); (11,1); (11,2)]
 
 let conv t n =
     let (r,c) = corner t in
@@ -73,3 +75,12 @@ let get_cmd () = String.lowercase (read_line ())
 let is_int s =
   try ignore (int_of_string s); true
   with _ -> false
+
+(* From RosettaCode *)
+let rec split_char sep str =
+  try
+    let i = String.index str sep in
+    String.sub str 0 i ::
+      split_char sep (String.sub str (i+1) (String.length str - i - 1))
+  with Not_found ->
+    [str]

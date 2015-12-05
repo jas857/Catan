@@ -40,7 +40,7 @@ val pick_dcard : gamestate -> gamestate
 val build : gamestate -> string -> gamestate
 
 (* Trade among players/bank *)
-val trade : gamestate -> gamestate
+val trade : gamestate -> string -> string -> int -> gamestate
 
 (* Have the AI make a move *)
 val a_i_makemove : gamestate -> gamestate
@@ -53,7 +53,7 @@ val get_settlement_info : unit -> coordinates
 
 val can_build_settlement : gamestate -> coordinates -> bool
 
-val build_settlement : gamestate -> coordinates -> gamestate
+val build_settlement : gamestate -> coordinates -> bool -> gamestate
 
 val can_build_road : coordinates -> coordinates -> gamestate -> bool
 

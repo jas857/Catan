@@ -7,6 +7,7 @@ open Gamestate
 open Player
 open Town
 open Dcard
+open Str
 
 type pixel = char * style list
 
@@ -25,7 +26,7 @@ let string_to_pix s =
   string_to_pix_st s [white; Bold; on_black]
 
 let board_start =[
-"               X---X                                   ";
+"               X---X    Current turn:                  ";
 "              /     \\                                  ";
 "         X---X   C   X---X                             ";
 "        /     \\     /     \\                            ";
@@ -131,20 +132,21 @@ let print_tile pb t =
 marking the type of trade available and the rate. *)
 let print_port pb (p:port) =
   let str = match p.exchange with
-            |(3, 3, 3, 3, 3) -> [('R',[white]);('3',[white;on_black])]
-            |(2, 4, 4, 4, 4) -> [('B',[white]);('2',[white;on_black])]
-            |(4, 2, 4, 4, 4) -> [('W',[white]);('2',[white;on_black])]
-            |(4, 4, 2, 4, 4) -> [('O',[white]);('2',[white;on_black])]
-            |(4, 4, 4, 2, 4) -> [('G',[white]);('2',[white;on_black])]
-            |(4, 4, 4, 4, 2) -> [('L',[white]);('2',[white;on_black])]
+            |(3, 3, 3, 3, 3) -> [('R',[Bold]);('3',[white;Bold;on_black])]
+            |(2, 4, 4, 4, 4) -> [('B',[Bold]);('2',[white;Bold;on_black])]
+            |(4, 2, 4, 4, 4) -> [('W',[Bold]);('2',[white;Bold;on_black])]
+            |(4, 4, 2, 4, 4) -> [('O',[Bold]);('2',[white;Bold;on_black])]
+            |(4, 4, 4, 2, 4) -> [('G',[Bold]);('2',[white;Bold;on_black])]
+            |(4, 4, 4, 4, 2) -> [('L',[Bold]);('2',[white;Bold;on_black])]
             |_ -> failwith "Unmatched port" in
-  write_board pb p.location str
+  write_board pb (grid_to_board p.location) str
 
 (* Initialize a new printed board with tile info and grid.*)
 (* pixboard -> board -> pixboard *)
-let print_board pb b =
+let print_board b =
+  let pb = board_start in
   let pb = List.fold_left print_tile pb b.tiles in
-  pb (* List.fold_left print_port pb b.ports *)
+  List.fold_left print_port pb b.ports
 
 (* Create a copy of the board with the player's resources and trade rates
 printed in the correct place. *)
@@ -190,11 +192,20 @@ let print_player pb p =
     write_board pb (r,c) (string_to_pix_st str st) in
   List.fold_left print_road pb p.roads
 
-let print_game gs=
-  let pb = board_start in
-  let pb = print_board pb gs.game_board in
+let print_turn pb gs =
+  let text, col = match gs.playerturn with
+             |Red -> ("Red", red)
+             |Blue -> ("Blue", blue)
+             |White -> ("Cyan", cyan)
+             |Orange -> ("Green", green) in
+  write_board pb (38,0) (string_to_pix_st text [col;Bold;on_black])
+
+
+let print_game gs =
+  let pb = print_board gs.game_board in
   let pb = print_resources pb (match_color gs.playerturn gs.players) in
   let pb = List.fold_left print_player pb gs.players in
+  let pb = print_turn pb gs in
   print_pixboard pb
 (* Test content for printing *)
 let red_player = {
@@ -207,7 +218,7 @@ let red_player = {
   towns=[];
   victory_points=0;
   dcards=[];
-  resources = (0,0,0,0,0);
+  resources = (6,6,6,6,6);
   exchange = (4,4,4,4,4);
   color = Red;
   a_i = false;
@@ -224,7 +235,7 @@ let orange_player = {red_player with color=Orange}
 let test_gs = {playerturn=Red;
                players=[red_player;blue_player;white_player;orange_player];
                game_board=initialize_board ();
-               game_stage=Start;
+               game_stage=Trade;
                longest_road_claimed=false;
                largest_army_claimed=false}
 
@@ -310,28 +321,42 @@ let rec buildOrPlay (cmd: string) (gs : gamestate) : gamestate =
 
   | _ -> gs
 
+
+(* Command format:
+"trade X brick wool" will spend at most X bricks to purchase wool. *)
+let rec trade_repl gs : gamestate =
+  let _ = print_string_w "Please enter a command in the format: \"trade [int] [resource to spend] [resource to purchase]\"\n" in
+  let cmd = split_char ' ' (get_cmd ()) in
+  if (List.length cmd) <> 4 then
+    trade_repl gs
+  else
+    trade gs (List.nth cmd 2) (List.nth cmd 3) (int_of_string (List.nth cmd 1))
+
 let rec main_repl (gs: gamestate) : gamestate =
   match gs.game_stage with
   | Start -> let _ = print_game gs (*prints game*) in
              let coor = get_settlement_info () in (*get settlement coordinates*)
              if( not (can_build_settlement gs coor))
-               then let _ = print_string_w "Cannot build a settlement there, redo turn" in
+               then let _ = print_string_w
+                "Cannot build a settlement there, redo turn\n" in
                 main_repl gs (*wrong input*)
-             else let gs1 = build_settlement gs coor in(*correct input*)
+             else let gs1 = build_settlement gs coor true in(*correct input*)
              let _ = print_game gs1 in
              let (s, e) = get_road_info () in (*get road coordinates*)
              if( not (can_build_road s e gs1)) then
-             let _ = print_string_w "Cannot build a road there, redo turn" in main_repl gs
+             let _ = print_string_w
+              "Cannot build a road there, redo turn\n" in main_repl gs
              else main_repl (change_stage (build_road gs1 (s,e)))
              (*build road then change turn*)
   | Production -> let _ = print_string_w
-            "type roll or play: roll the die or play a development card" in
+            "type roll or play: roll the die or play a development card.\n" in
             let cmd = get_cmd () in
              main_repl (rollOrPlay cmd gs)
-  | Trade -> failwith "TODO"(*TO BE IMPLEMENTED*)
+  | Trade ->let _ = print_game gs in
+            main_repl (trade_repl gs)
   | Build -> let _ = print_string_w
             "type build, play, or end: build something,
-             play a development card or end your turn" in
+             play a development card or end your turn\n" in
             let cmd = get_cmd () in
              main_repl (buildOrPlay cmd gs)
   | End -> gs

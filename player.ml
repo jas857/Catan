@@ -26,8 +26,8 @@ type player = {
   towns : town list;
   victory_points : int;
   dcards : dcard list;
-  resources : (int * int * int * int * int);
-  exchange : (int * int * int * int * int);
+  resources : rsrc;
+  exchange : rsrc;
   color : color;
   a_i : bool;
   ai_vars : a_i_variables;
@@ -42,23 +42,35 @@ let rec change_player_list (lst: player list) (plyr: player) : player list =
   | h::t -> if h.color = plyr.color then plyr::t else h::(change_player_list t plyr)
   | [] -> []
 
-let get_resource (plyr: player) (resource: int) : int =
-  match (resource, plyr.resources) with
+let split_resource (r:rsrc) (resource: int) : int =
+  match (resource, r) with
   | 0, (x,_,_,_,_) -> x (* Brick *)
   | 1, (_,x,_,_,_) -> x (* Wool *)
   | 2, (_,_,x,_,_) -> x (* Ore *)
   | 3, (_,_,_,x,_) -> x (* Grain *)
   | 4, (_,_,_,_,x) -> x (* Lumber *)
-  | _ -> failwith "Resource does not exist"
+  | _ -> failwith "Invalid resource index."
 
+let get_resource (plyr: player) (resource: int) : int =
+  split_resource plyr.resources resource
+
+let get_exchange (plyr: player) (resource: int) : int =
+  split_resource plyr.exchange resource
+
+(* Change the specified resource by amt. *)
 let change_resource (plyr: player) (resource: int) (amt: int) : player =
   match (resource, plyr.resources) with
-  | 0, (_,x,y,z,w) -> {plyr with resources = (amt,x,y,z,w)}
-  | 1, (x,_,y,z,w) -> {plyr with resources = (x,amt,y,z,w)}
-  | 2, (x,y,_,z,w) -> {plyr with resources = (x,y,amt,z,w)}
-  | 3, (x,y,z,_,w) -> {plyr with resources = (x,y,z,amt,w)}
-  | 4, (x,y,z,w,_) -> {plyr with resources = (x,y,z,w,amt)}
+  | 0, (a,x,y,z,w) -> {plyr with resources = (a+amt,x,y,z,w)}
+  | 1, (x,a,y,z,w) -> {plyr with resources = (x,a+amt,y,z,w)}
+  | 2, (x,y,a,z,w) -> {plyr with resources = (x,y,a+amt,z,w)}
+  | 3, (x,y,z,a,w) -> {plyr with resources = (x,y,z,a+amt,w)}
+  | 4, (x,y,z,w,a) -> {plyr with resources = (x,y,z,w,a+amt)}
   | _ , _          -> failwith "Change_resource parameters not met"
+
+let change_resources (plyr: player) (amt: rsrc) : player =
+  let (a,b,c,d,e) = plyr.resources in
+  let (d1,d2,d3,d4,d5) = amt in
+  {plyr with resources=(a+d1,b+d2,c+d3,d+d4,e+d5)}
 
 let rec update_largest_army (players: player list) (changing_player: player) =
   match players with
