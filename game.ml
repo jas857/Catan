@@ -366,8 +366,19 @@ else
   |"end" -> change_stage gs
 
   | _ -> gs
-  
 
+  
+(*print out victor and any other details about game over*)
+let game_complete (gs:gamestate) =
+  let _ = print_game gs in
+  let winner = gs.playerturn in
+  match winner with
+  |Red -> let _ = print_string "Congratulations Red You Have Been Victorious!" in {gs with game_stage = End}
+  |Blue -> let _ = print_string "Congratulations Blue You Have Been Victorious!" in {gs with game_stage = End}
+  |White -> let _ = print_string "Congratulations White You Have Been Victorious!" in {gs with game_stage = End}
+  |Orange -> let _ = print_string "Congratulations Orange You Have Been Victorious!" in {gs with game_stage = End}
+
+(*returns true if a player has won*)
 let rec hasWon (players: player list): bool =
   match players with
   |[] -> false
