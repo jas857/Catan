@@ -197,17 +197,17 @@ let print_game gs=
   let pb = List.fold_left print_player pb gs.players in
   print_pixboard pb
 (* Test content for printing *)
-let player1 = {
-  roads_left=3;
+let red_player = {
+  roads_left=15;
   (* roads=[((2,2),(3,3));((3,3),(4,3));((4,3),(5,3))]; *)
   roads=[];
-  settlements_left=3;
-  cities_left=3;
+  settlements_left=5;
+  cities_left=4;
   (* towns=[{location=(2,2);pickup=1};{location=(7,3);pickup=2}]; *)
   towns=[];
   victory_points=0;
   dcards=[];
-  resources = (2,3,4,5,6);
+  resources = (0,0,0,0,0);
   exchange = (4,4,4,4,4);
   color = Red;
   a_i = false;
@@ -217,9 +217,12 @@ let player1 = {
   road_size=0;
   longest_road = false
 }
+let blue_player = {red_player with color=Blue}
+let white_player = {red_player with color=White}
+let orange_player = {red_player with color=Orange}
 
 let test_gs = {playerturn=Red;
-               players=[player1];
+               players=[red_player;blue_player;white_player;orange_player];
                game_board=initialize_board ();
                game_stage=Start;
                longest_road_claimed=false;
@@ -319,7 +322,7 @@ let rec main_repl (gs: gamestate) : gamestate =
              let (s, e) = get_road_info () in (*get road coordinates*)
              if( not (can_build_road s e gs1)) then
              let _ = print_string_w "Cannot build a road there, redo turn" in main_repl gs
-             else main_repl (build_road gs1 (s,e))
+             else main_repl (change_stage (build_road gs1 (s,e)))
              (*build road then change turn*)
   | Production -> let _ = print_string_w
             "type roll or play: roll the die or play a development card" in
