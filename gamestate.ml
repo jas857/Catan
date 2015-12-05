@@ -68,18 +68,15 @@ let choose_next_start (gs:gamestate) =
 let change_turn (gs:gamestate) =
   {(next_forward gs) with game_stage = Production}
 
-  (*print out victor and any other details about game over*)
-let game_complete (gs:gamestate) =
-  failwith "todo"
 
 (* Change the stage of the game, should only be called when a player has
-has finsihed a stage and the stage should be changed *)
+has finished a stage and the stage should be changed *)
 let change_stage (gs:gamestate) =
   match gs.game_stage with
   |Start -> choose_next_start gs
   |Production -> {gs with game_stage = Build}
   |Build -> change_turn gs
-  |End -> game_complete gs
+  |End -> gs
 
 
 (* returns tile given a character location of the tile *)
@@ -238,7 +235,8 @@ let rec build_settlement (gs: gamestate) (coor: coordinates)
   let currentPlayer = curr_player gs in
   let tempPlayer = {currentPlayer with
   settlements_left = currentPlayer.settlements_left - 1;
-  towns = {location = coor; pickup = 1}::(currentPlayer.towns)} in
+  towns = {location = coor; pickup = 1}::(currentPlayer.towns);
+  victory_points = currentPlayer.victory_points + 1} in
   let gs = change_player gs (if free then tempPlayer else
       change_resources tempPlayer (-1,-1,0,-1,-1)) in
   {gs with game_board = {gs.game_board with
@@ -272,7 +270,8 @@ let rec build_city (gs: gamestate) (coor: coordinates) : gamestate =
   let tempPlayer = {currentPlayer with
   towns = (city_helper currentPlayer.towns coor)} in
   let tempPlayer = change_resources tempPlayer (0,0,-3,-2,0) in
-  let gs = change_player gs tempPlayer in
+  let tempPlayer2 = {tempPlayer with victory_points = tempPlayer.victory_points + 1} in
+  let gs = change_player gs tempPlayer2 in
   {gs with game_board = {gs.game_board with
     tiles = settlement_helper gs.game_board.tiles coor currentPlayer.color}}
 

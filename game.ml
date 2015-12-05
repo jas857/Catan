@@ -367,11 +367,34 @@ else
 
   | _ -> gs
 
+  
+(*print out victor and any other details about game over*)
+let game_complete (gs:gamestate) =
+  let _ = print_game gs in
+  let winner = gs.playerturn in
+  match winner with
+  |Red -> let _ = print_string_w "Congratulations Red You Have Been Victorious!" in {gs with game_stage = End}
+  |Blue -> let _ = print_string_w "Congratulations Blue You Have Been Victorious!" in {gs with game_stage = End}
+  |White -> let _ = print_string_w "Congratulations White You Have Been Victorious!" in {gs with game_stage = End}
+  |Orange -> let _ = print_string_w "Congratulations Orange You Have Been Victorious!" in {gs with game_stage = End}
+
+(*returns true if a player has won*)
+let rec hasWon (players: player list): bool =
+  match players with
+  |[] -> false
+  |h::t -> if(h.victory_points > 9)
+            then true
+           else hasWon t
+
 let rec main_repl (gs: gamestate) : gamestate =
   match gs.game_stage with
   | Start -> main_repl (start_repl gs)
-  | Production -> main_repl (prod_repl gs)
-  | Build -> main_repl (build_repl gs)
+  | Production -> if(hasWon gs.players) 
+                      then main_repl (game_complete gs)
+                  else main_repl (prod_repl gs)
+  | Build -> if(hasWon gs.players)
+                      then main_repl (game_complete gs)
+                  else main_repl (build_repl gs)
   | End -> gs
 
 (* let _ = main_repl trade_gs *)
