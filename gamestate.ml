@@ -238,7 +238,8 @@ let rec build_settlement (gs: gamestate) (coor: coordinates)
   let currentPlayer = curr_player gs in
   let tempPlayer = {currentPlayer with
   settlements_left = currentPlayer.settlements_left - 1;
-  towns = {location = coor; pickup = 1}::(currentPlayer.towns)} in
+  towns = {location = coor; pickup = 1}::(currentPlayer.towns);
+  victory_points = currentPlayer.victory_points + 1} in
   let gs = change_player gs (if free then tempPlayer else
       change_resources tempPlayer (-1,-1,0,-1,-1)) in
   {gs with game_board = {gs.game_board with
@@ -272,7 +273,8 @@ let rec build_city (gs: gamestate) (coor: coordinates) : gamestate =
   let tempPlayer = {currentPlayer with
   towns = (city_helper currentPlayer.towns coor)} in
   let tempPlayer = change_resources tempPlayer (0,0,-3,-2,0) in
-  let gs = change_player gs tempPlayer in
+  let tempPlayer2 = {tempPlayer with victory_points = tempPlayer.victory_points + 1}
+  let gs = change_player gs tempPlayer2 in
   {gs with game_board = {gs.game_board with
     tiles = settlement_helper gs.game_board.tiles coor currentPlayer.color}}
 
