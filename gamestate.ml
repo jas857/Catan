@@ -167,7 +167,9 @@ let rec get_pos () =
   let start_tile = read_line () in
   if(String.length start_tile <> 2) then
     let _ = print_string "Please enter a tile letter followed by a number 0-5.\n" in get_pos ()
-  else let s_tile = start_tile.[0] in
+  else
+  let start_tile = String.uppercase start_tile in
+  let s_tile = start_tile.[0] in
   let s_corner = int_of_string (Char.escaped start_tile.[1]) in
   conv s_tile s_corner
 
