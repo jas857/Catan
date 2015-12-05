@@ -17,3 +17,6 @@ val single_player_gs : gamestate
 
 (* A normal gamestate where Build has already been completed. *)
 val fast_gs : gamestate
+
+(*A completed gamestate*)
+val complete_gs : gamestate
