@@ -480,7 +480,7 @@ let can_move (state: gamestate) (coord: coordinates): bool =
 (* Checks if the coordinate has a road coming from curpos into it. Also checks if there is a town there. Also checks if it is off the board *)
 
 (* AI move position to build road *)
-let rec move_position (state: gamestate) (plyr: player)  : gamestate =
+let rec move_position (state: gamestate) (plyr: player) : gamestate =
   let start = plyr.ai_vars.curpos in
   let _ = ai_update_directions state plyr in
   if (fst plyr.ai_vars.curpos) mod 2 = 0 then
@@ -501,7 +501,7 @@ let rec move_position (state: gamestate) (plyr: player)  : gamestate =
                 let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) in
                 ai_build_road state plyr start endpt
               else
-                let (truefalse, plyr) = curpos_change plyr.roads plyr in
+                let (truefalse, plyr) = curpos_change plyr.roads plyr state.players in
                 (* If there are places to put roads, then place it *)
                 if truefalse then
                   move_position (change_player state plyr) plyr
@@ -526,7 +526,7 @@ let rec move_position (state: gamestate) (plyr: player)  : gamestate =
               let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos)) in
               ai_build_road state plyr start endpt
               else
-                let (truefalse, plyr) = curpos_change plyr.roads plyr in
+                let (truefalse, plyr) = curpos_change plyr.roads plyr state.players in
                 (* If there are places to put roads, then place it *)
                 if truefalse then
                   move_position (change_player state plyr) plyr
@@ -551,7 +551,7 @@ let rec move_position (state: gamestate) (plyr: player)  : gamestate =
               let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos) + 1) in
               ai_build_road state plyr start endpt
             else
-               let (truefalse, plyr) = curpos_change plyr.roads plyr in
+               let (truefalse, plyr) = curpos_change plyr.roads plyr state.players in
                 (* If there are places to put roads, then place it *)
                 if truefalse then
                   move_position (change_player state plyr) plyr
@@ -578,7 +578,7 @@ let rec move_position (state: gamestate) (plyr: player)  : gamestate =
                 let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos) - 1) in
                 ai_build_road state plyr start endpt
               else
-                let (truefalse, plyr) = curpos_change plyr.roads plyr in
+                let (truefalse, plyr) = curpos_change plyr.roads plyr state.players in
                 (* If there are places to put roads, then place it *)
                 if truefalse then
                   move_position (change_player state plyr) plyr
@@ -603,7 +603,7 @@ let rec move_position (state: gamestate) (plyr: player)  : gamestate =
               let endpt = (fst (plyr.ai_vars.curpos) + 1, snd (plyr.ai_vars.curpos)) in
               ai_build_road state plyr start endpt
               else
-                let (truefalse, plyr) = curpos_change plyr.roads plyr in
+                let (truefalse, plyr) = curpos_change plyr.roads plyr state.players in
                 (* If there are places to put roads, then place it *)
                 if truefalse then
                   move_position (change_player state plyr) plyr
@@ -628,7 +628,7 @@ let rec move_position (state: gamestate) (plyr: player)  : gamestate =
                 let endpt = (fst (plyr.ai_vars.curpos) - 1, snd (plyr.ai_vars.curpos) - 1) in
                 ai_build_road state plyr start endpt
           else
-               let (truefalse, plyr) = curpos_change plyr.roads plyr in
+               let (truefalse, plyr) = curpos_change plyr.roads plyr state.players in
                 (* If there are places to put roads, then place it *)
                 if truefalse then
                   move_position (change_player state plyr) plyr
@@ -702,6 +702,7 @@ let ai_check_build_dcard (state: gamestate) (player: player) : gamestate =
 let ai_check_build_road (state: gamestate) (player: player): gamestate =
   if (get_resource player 0) > 0 && (get_resource player 4) > 0 then
     (* Build road *)
+    let _ = print_endline("roadbuilding") in
     let player = change_resources player (-1,0,0,0,-1) in
     let gs = move_position state player in
     let plyr = curr_player gs in
@@ -720,9 +721,9 @@ let ai_check_build_settlement (state: gamestate) (player: player) : gamestate =
       let rec match_roads (roads: (coordinates * coordinates) list) =
       (match roads with
       | h::t -> if can_build_settlement state (fst h) then
-                    build_settlement state (fst h) false
+                    ai_build_settlement state player (fst h) false
                 else if can_build_settlement state (snd h) then
-                    build_settlement state (snd h) false
+                    ai_build_settlement state player (snd h) false
                 else match_roads t
       | [] -> state) in
       match_roads player.roads
@@ -730,6 +731,8 @@ let ai_check_build_settlement (state: gamestate) (player: player) : gamestate =
     ai_check_build_road state player
 
 let rec ai_look_for_upgrades (state:gamestate) (num1:int) (num2:int):gamestate =
+  if num1 > 12 || num2 < 2 then state
+  else
   let tiles = List.filter
     (fun tile -> tile.collect_on = num1 || tile.collect_on = num2)
     state.game_board.tiles in
@@ -775,7 +778,7 @@ let ai_build_or_play (state: gamestate): gamestate =
   let dcards_to_play = has_dcards_to_play player in
   if (List.length dcards_to_play) > 0 then
     (* Play Dcard *)
-    ai_play_dcard state dcards_to_play
+    change_stage (ai_play_dcard state dcards_to_play)
   else
     (* Build *)
     change_stage (a_i_makemove state)
@@ -785,7 +788,7 @@ let ai_roll_or_play (state: gamestate): gamestate =
   let dcards_to_play = has_dcards_to_play player in
   if (List.length dcards_to_play) > 0 then
     (* Play Dcard *)
-    ai_play_dcard state dcards_to_play
+    change_stage (ai_play_dcard state dcards_to_play)
   else
     (* Roll *)
     let _ = Random.self_init () in
