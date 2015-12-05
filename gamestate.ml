@@ -792,6 +792,13 @@ let ai_roll_or_play (state: gamestate): gamestate =
     (* Roll *)
     let _ = Random.self_init () in
              let rnd = (((Random.int 6) + 2) + Random.int 6) in
+             if rnd = 7 then
+              let tiles = state.game_board.tiles in
+              let randTile = List.nth tiles (Random.int (List.length tiles)) in
+              move_robber (check_largest_army state
+                          {player with army_size = player.army_size + 1})
+              randTile.loc
+             else
              let playersWResources =
              collect_player_resource state.players state.game_board.tiles rnd in
              change_stage {state with players = playersWResources}

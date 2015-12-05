@@ -315,6 +315,14 @@ let rec trade_repl gs : gamestate =
     trade_repl (trade gs
       (List.nth cmd 2) (List.nth cmd 3) (int_of_string (List.nth cmd 1)))
 
+let rec get_robber_pos () =
+  let tile = read_line () in
+  if(String.length tile <> 1) then
+    let _ = print_string_w "Please enter a tile letter of a tile.\n" in get_robber_pos ()
+  else
+  let tile = String.uppercase tile in
+  tile.[0]
+
 let rec prod_repl (gs : gamestate) : gamestate =
 if (curr_player gs).a_i then
   let _ = print_endline("roll") in
@@ -328,6 +336,10 @@ else
   match cmd with
   |"roll" -> let _ = Random.self_init () in
              let rnd = (((Random.int 6) + 2) + Random.int 6) in
+             if rnd = 7 then
+              let tl = get_robber_pos () in
+              move_robber gs tl
+             else
              let playersWResources =
              collect_player_resource gs.players gs.game_board.tiles rnd in
              let gs = {gs with players = playersWResources} in
@@ -367,7 +379,7 @@ else
 
   | _ -> gs
 
-  
+
 (*print out victor and any other details about game over*)
 let game_complete (gs:gamestate) =
   let _ = print_game gs in
@@ -389,7 +401,7 @@ let rec hasWon (players: player list): bool =
 let rec main_repl (gs: gamestate) : gamestate =
   match gs.game_stage with
   | Start -> main_repl (start_repl gs)
-  | Production -> if(hasWon gs.players) 
+  | Production -> if(hasWon gs.players)
                       then main_repl (game_complete gs)
                   else main_repl (prod_repl gs)
   | Build -> if(hasWon gs.players)

@@ -90,5 +90,5 @@ let fast_gs = rebuild_towns {default_gs with
                                  resources=(6,6,6,6,6);
                                  roads_left=13;
                                  settlements_left=3}]}
-                                 
-let complete_gs = {fast_gs with stage = End}
+
+let complete_gs = {fast_gs with game_stage = End}
