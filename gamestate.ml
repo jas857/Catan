@@ -201,7 +201,8 @@ let rec build_road (state: gamestate)
   let currentPlayer = curr_player state in
   let updatePlayer = {currentPlayer with
   roads = (((startTileCoor),(endTileCoor))::(currentPlayer.roads));
-  roads_left = currentPlayer.roads_left - 1} in
+  roads_left = currentPlayer.roads_left - 1;
+  road_size = currentPlayer.road_size + 1} in
   change_player state updatePlayer
 
 
