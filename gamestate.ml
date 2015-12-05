@@ -251,26 +251,13 @@ let rec city_helper (towns: town list)
 
 let rec get_city_info (): (coordinates) =
   let _ = print_string
-  "Please enter the letter of the tile
-  where you would like to build your city: " in
-  let start_tile = read_line() in
-  if(String.length start_tile <> 1) then let _ =
-  print_string "unacceptable input\n" in get_city_info ()
-  else let s_tile = start_tile.[0] in
-
-  let _ = print_string "Please enter the number of the tile
-  corner you would like to build your settlement on: " in
-  let start_corner = read_line() in
-
-  if(not (is_int start_corner))
-    then let _ = print_string "unacceptable input\n" in get_city_info ()
-  else let s_corner = int_of_string start_corner in
-  conv s_tile s_corner
+  "Please enter the corner where you would like to build your city: " in
+  get_pos ()
 
 (*checks to see if we can build a city at the given location*)
 let can_build_city (gs: gamestate) (coor: coordinates) : bool =
   let currentPlayer = curr_player gs in
-  not (List.mem {location = coor ; pickup = 1} currentPlayer.towns)
+  any (fun t -> t.pickup=1 && t.location=coor) currentPlayer.towns
 
 
 (*builds the city by updating the tiles and updating the player*)
@@ -301,40 +288,43 @@ let pick_dcard_subtract_cost (gs:gamestate): gamestate =
 
 
 (*handles all of the building, checking, and inputting*)
-let rec build (state: gamestate) (input:string): gamestate =
-  let player = curr_player state in
+let rec build (gs: gamestate) (input:string): gamestate =
+  let player = curr_player gs in
   (match String.lowercase input with
   |"road" -> if (get_resource player 0) > 0 && (get_resource player 4) > 0
-                then failwith "TODO"(* BUILD ROAD *)
-             else print_endline ("Insufficient resources"); state
+                then let gs = build_road gs (get_road_info ()) in
+                (*Don't overwrite the new player w/ road in it.*)
+                let player = curr_player gs in
+                change_player gs (change_resources player (-1,0,0,0,-1))
+             else let _ = print_endline ("Insufficient resources\n") in gs
   |"settlement" -> if (get_resource player 0) > 0 &&
              (get_resource player 1) > 0 &&
              (get_resource player 3) > 0 &&
              (get_resource player 4) > 0
              then let sCoor = get_settlement_info () in (* BUILD SETTLEMENT *)
-              if(can_build_settlement state sCoor)
+              if(can_build_settlement gs sCoor)
               (*check if settlement can be built*)
-                then (build_settlement state sCoor false)
-              else let _ = print_string "cannot build a settlement here\n" in state
-              (*if cannot build a settlement then return original gamestate*)
+                then (build_settlement gs sCoor false)
+              else let _ = print_string "cannot build a settlement here\n" in gs
+              (*if cannot build a settlement then return original gamegs*)
 
-             else let _ = print_endline ("Insufficient resources") in state
+             else let _ = print_endline ("Insufficient resources") in gs
 
   |"city" -> if (get_resource player 3) > 1 &&
            (get_resource player 2) > 2
             then let cityCoor = get_city_info () in
-              if (can_build_city state cityCoor) (*check if can build city at coor*)
-                  then (build_city state cityCoor) (*build city if can*)
+              if (can_build_city gs cityCoor) (*check if can build city at coor*)
+                  then (build_city gs cityCoor) (*build city if can*)
               else let _ = print_string "cannot build a city here\n" in
-              state (*if cannot build city then return original gamestate*)
+              gs (*if cannot build city then return original gamegs*)
 
-            else let _ = print_endline ("Insufficient resources") in state
+            else let _ = print_endline ("Insufficient resources") in gs
   |"dcard" -> if (get_resource player 1) > 0 &&
            (get_resource player 2) > 0 &&
            (get_resource player 3) > 0
-            then (pick_dcard_subtract_cost state) (*change the resources*)
-            else let _ =print_endline ("Insufficient resources") in state
-  | _ -> state)
+            then (pick_dcard_subtract_cost gs) (*change the resources*)
+            else let _ =print_endline ("Insufficient resources") in gs
+  | _ -> gs)
 
 let play_road_building (state:gamestate) (r1:(coordinates *coordinates))
 (r2:(coordinates * coordinates)): gamestate =
