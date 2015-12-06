@@ -111,6 +111,13 @@ let initialize_single_player () =
   [init_non_ai_player Red; init_ai_player Blue;
     init_ai_player White; init_ai_player Orange]
 
+let initialize_ai_players (num:int) =
+  if num = 0 then initialize_non_ai_players
+  else if num = 1 then initialize_single_player
+  else if num = 2 then initialize_2_ai_players
+  else if num = 3 then initialize_3_ai_players
+  else initialize_all_ai_players
+
 let is_road (road: coordinates * coordinates) (plyrs:player list): bool =
   let (a,b) = road in
   let rec check_all_players (players: player list) =

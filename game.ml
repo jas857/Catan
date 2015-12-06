@@ -426,5 +426,21 @@ let rec main_repl (gs: gamestate) : gamestate =
                   else main_repl (build_repl gs)
   | End -> game_complete gs
 
-(* let _ = main_repl trade_gs *)
-let _ = main_repl single_player_gs
+let rec num_ai_repl (): int =
+  let _ = print_endline
+    ("How many AI players would you like (There are 4 total players)?") in
+  let input = read_line () in
+  if is_int input then
+    let i = int_of_string input
+    if i >= 0 && i <= 4 then
+      let gs = {playerturn=Red;
+               players = initialize_ai_players i;
+               game_board=initialize_board ();
+               game_stage=Start;
+               longest_road_claimed=false;
+               largest_army_claimed=false} in
+      main_repl gs
+    else num_ai_repl
+  else num_ai_repl
+
+let _ = num_ai_repl
