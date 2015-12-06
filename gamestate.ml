@@ -195,6 +195,55 @@ let can_build_road (fst: coordinates)
 (*modifies the gamestate to include the built road*)
 
 (*builds the actual road in game state*)
+(*returns who has the longest road*)
+let rec who_has_longest_road (players: player list) (plyr: player) =
+  match players with
+  |[] -> plyr
+  |h::t -> if(plyr.road_size < h.road_size) 
+            then h
+           else who_has_longest_road t plyr
+
+(*returns who had the longest road prior to the new road being built*)           
+let rec old_longest_road_holder (players: player list) (plyr: player) =
+  match players with
+  |[] -> plyr
+  |h::t -> if(h.longest_road) 
+            then h
+           else old_longest_road_holder t plyr 
+           
+(*changes gamestate to update victory 
+points and booleans based on road being built*)
+let rec update_longest_road (gs: gamestate): gamestate =
+  let currentP = curr_player gs in
+  let newHolder = who_has_longest_road gs.players currentP in
+  let oldHolder = old_longest_road_holder gs.players currentP in
+  if(newHolder = oldHolder)
+    then 
+      if(newHolder.road_size = 5) 
+        then change_player {gs with longest_road_claimed = true}
+          {newHolder with victory_points = newHolder.victory_points + 2}
+        else gs
+  else 
+    let newHolder2 = {newHolder with longest_road = true} in
+    let oldHolder2 = {oldHolder with longest_road = false} in 
+    if(oldHolder2.road_size > 4)
+      then let newGs = {gs with longest_road_claimed = true} in
+      let newGs2 = change_player newGs 
+      {newHolder2 with victory_points = newHolder2.victory_points + 2} in
+      (change_player newGs2 
+      {oldHolder2 with victory_points = oldHolder2.victory_points - 2})
+    else 
+      if((newHolder2.road_size = 5) && (oldHolder2.road_size = 4))
+        then let newGs = {gs with longest_road_claimed = true} in
+        let newGs2 = change_player newGs oldHolder2 in
+        (change_player newGs2 
+        {newHolder2 with victory_points = newHolder2.victory_points + 2})
+      else
+        let newGs = change_player gs newHolder2 in
+        (change_player newGs oldHolder2)
+    
+  
+(*builds the actual road in game state*)
 let rec build_road (state: gamestate)
 (coor: (coordinates * coordinates)): gamestate =
   let (startTileCoor, endTileCoor) = coor in
@@ -203,7 +252,9 @@ let rec build_road (state: gamestate)
   roads = (((startTileCoor),(endTileCoor))::(currentPlayer.roads));
   roads_left = currentPlayer.roads_left - 1;
   road_size = currentPlayer.road_size + 1} in
-  change_player state updatePlayer
+  let newGs = change_player state updatePlayer in
+  update_longest_road newGs
+
 
 
 (*if the tile contains the town then add to the towns list of the tile*)
