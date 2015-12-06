@@ -6,9 +6,9 @@ open Dcard
 	a list of dcards. *)
 
 type board = {
-	tiles : tile list;
-	ports : port list;
-	dcards : dcard list;
+	tiles : tile list; (* A list of tiles on the board *)
+	ports : port list; (* A list of ports on the board *)
+	dcards : dcard list; (* A list of development cards available *)
 }
 
 (* Generates a new Board to be used by randomly placing tiles, and randomly
