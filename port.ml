@@ -13,6 +13,7 @@ let ore = (4, 4, 2, 4, 4)
 let grain = (4, 4, 4, 2, 4)
 let lumber = (4, 4, 4, 4, 2)
 
+(* List of port locations hardcoded to match the original game. *)
 let ports =[
 
 {location=(0, 0);exchange=wildcard};

@@ -2,14 +2,8 @@ open Utilities
 open Dcard
 open Town
 
-(* Player module that contains information regarding:
-  -how many roads/settlements/cities the player has left
-  -what roads/settlements/cities the player has on the board
-  -the victory points the player has
-  -the player's inventory
-  -the exchange rate the player has
-  -the player's color *)
-
+(* Mutable variables used for the search algorithms which back
+our AI. *)
 type a_i_variables = {
   mutable curpos : coordinates;
   mutable left : int;
@@ -18,6 +12,10 @@ type a_i_variables = {
   mutable down : int
 }
 
+(* Stores all specific information about a single player.
+The only duplication of this data is in tiles, where the
+towns are represented again to make resource distribution
+easier.*)
 type player = {
   roads_left : int;
   roads : (coordinates * coordinates) list;
@@ -37,12 +35,15 @@ type player = {
   longest_road : bool
 }
 
+(* Automatically finds the old version of the provided player based on
+color and replacees them. *)
 let rec change_player_list (lst: player list) (plyr: player) : player list =
   match lst with
   | h::t -> if h.color = plyr.color then plyr::t
             else h::(change_player_list t plyr)
   | [] -> []
 
+(* Pull a single resource out of the 5-tuple. *)
 let split_resource (r:rsrc) (resource: int) : int =
   match (resource, r) with
   | 0, (x,_,_,_,_) -> x (* Brick *)
@@ -52,9 +53,11 @@ let split_resource (r:rsrc) (resource: int) : int =
   | 4, (_,_,_,_,x) -> x (* Lumber *)
   | _ -> failwith "Invalid resource index."
 
+(* Get a specified resource from a player *)
 let get_resource (plyr: player) (resource: int) : int =
   split_resource plyr.resources resource
 
+(* Get a specified trade exchange rate from a player *)
 let get_exchange (plyr: player) (resource: int) : int =
   split_resource plyr.exchange resource
 
@@ -68,11 +71,14 @@ let change_resource (plyr: player) (resource: int) (amt: int) : player =
   | 4, (x,y,z,w,a) -> {plyr with resources = (x,y,z,w,a+amt)}
   | _ , _          -> failwith "Change_resource parameters not met"
 
+(* Change multiple resources at once with a 5-tuple representing
+the overall change. *)
 let change_resources (plyr: player) (amt: rsrc) : player =
   let (a,b,c,d,e) = plyr.resources in
   let (d1,d2,d3,d4,d5) = amt in
   {plyr with resources=(a+d1,b+d2,c+d3,d+d4,e+d5)}
 
+(* Update the owner of the largest army point bonus. *)
 let rec update_largest_army (players: player list) (changing_player: player) =
   match players with
   | [] -> []
@@ -89,6 +95,7 @@ let rec update_largest_army (players: player list) (changing_player: player) =
               else
                 h::(update_largest_army t changing_player)
 
+(* Initialize a human player *)
 let init_non_ai_player (c:color) = {roads_left = 15; roads = [];
   settlements_left = 5; cities_left = 4; towns = []; victory_points = 0;
   dcards = []; resources = (0,0,0,0,0); exchange = (4,4,4,4,4);
@@ -96,32 +103,39 @@ let init_non_ai_player (c:color) = {roads_left = 15; roads = [];
   down = 0}; army_size = 0; largest_army = false;
   road_size = 0; longest_road = false}
 
+(* Initialize a computer player. *)
 let init_ai_player (c:color) = {roads_left =15; roads = []; settlements_left =5;
   cities_left = 4; towns = []; victory_points = 0;
   dcards = []; resources = (0,0,0,0,0); exchange = (4,4,4,4,4);
   color = c; a_i = true; ai_vars = {curpos = (0,0); left = 0; right = 0; up = 0;
   down = 0}; army_size = 0; largest_army = false;
   road_size = 0; longest_road = false}
-
+(* Initialize all four players as humans. *)
 let initialize_non_ai_players () =
   [init_non_ai_player Red; init_non_ai_player Blue;
   init_non_ai_player White; init_non_ai_player Orange]
 
+(* Initialize 3 ai and 1 human player. *)
 let initialize_single_player () =
   [init_non_ai_player Red; init_ai_player Blue;
     init_ai_player White; init_ai_player Orange]
 
+(* Initialize 2 ai and 2 human players. *)
 let initialize_2_ai_players () =
   [init_non_ai_player Red; init_non_ai_player Blue;
     init_ai_player White; init_ai_player Orange]
 
+(* Initialize 1 ai and 3 human players. *)
 let initialize_1_ai_player () =
   [init_non_ai_player Red; init_non_ai_player Blue;
     init_non_ai_player White; init_ai_player Orange]
+
+(* Initialize all 4 players as ai. *)
 let initialize_all_ai_players () =
   [init_ai_player Red; init_ai_player Blue;
     init_ai_player White; init_ai_player Orange]
 
+(* Initialize the stated number of ai players. *)
 let initialize_ai_players (num:int) =
   if num = 0 then initialize_non_ai_players ()
   else if num = 1 then initialize_1_ai_player ()
@@ -129,6 +143,7 @@ let initialize_ai_players (num:int) =
   else if num = 3 then initialize_single_player ()
   else initialize_all_ai_players ()
 
+(* Checks whether a specified coordinate pair has a road on it. *)
 let is_road (road: coordinates * coordinates) (plyrs:player list): bool =
   let (a,b) = road in
   let rec check_all_players (players: player list) =
@@ -140,6 +155,7 @@ let is_road (road: coordinates * coordinates) (plyrs:player list): bool =
   |[] -> false) in
   check_all_players plyrs
 
+(* Check whether a given corner has an unbuilt road edge touching it. *)
 let corner_can_expand (coord: coordinates) (plyrs: player list) : bool =
 if (fst coord) mod 2 = 0 then
   not(is_road (coord, ((fst coord) + 1, snd coord)) plyrs) ||
@@ -150,6 +166,7 @@ else
   not(is_road (coord, ((fst coord) - 1, snd coord)) plyrs) ||
   not(is_road (coord, ((fst coord) - 1, (snd coord) - 1)) plyrs)
 
+(* Move the search cursor for a given player's ai. *)
 let rec curpos_change(roads: (coordinates * coordinates) list) (plyr: player)
   (plyrs: player list): (bool*player) =
   match roads with

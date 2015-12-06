@@ -14,6 +14,7 @@ type tile = {
   robber : bool
 }
 
+(* Update the specified tile automatically using its letter to match. *)
 let rec rebuild_tile_list (tl:tile list) (t:tile) =
   match tl with
   |[] -> []
@@ -36,7 +37,7 @@ let envs = [Hills;Hills;Hills;
             Forest;Forest;Forest;Forest;
             Desert]
 
-
+(* Generate the initial tile list to shuffle for board generation. *)
 let rec make_tiles (tl:tile list) (nl:int list) (el:environment list)
  (c:tile_location)=
   if List.length el = 0 then tl else
@@ -62,11 +63,13 @@ let rec make_tiles (tl:tile list) (nl:int list) (el:environment list)
   |([],_) -> failwith "empty num"
 
 
-
+(* Shuffle the environment, position, and collect number combinations
+to create a new random board. *)
 let initialize_tiles () =
   let shuffNum = shuffle numbers in
   let shuffEnv = shuffle envs in
   make_tiles [] shuffNum shuffEnv '@'
 
+(* Return a list of coordinates which border this tile. *)
 let corners t =
   List.map (fun n-> conv t.loc n) [0;1;2;3;4;5]

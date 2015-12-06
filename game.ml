@@ -18,13 +18,16 @@ type pixboard = pixrow list
 (* Behaves like normal print_string. *)
 let print_string_w s = print_string [white;on_black] s
 
+(* Convert a string to a pixrow with the provided style. *)
 let string_to_pix_st s st =
   let cs = string_to_char_list s in
   List.map (fun c -> (c,st)) cs
 
+(* Convert a string to a pixrow in white bold on a black bg. *)
 let string_to_pix s =
   string_to_pix_st s [white; Bold; on_black]
 
+(* initial state of the board *)
 let board_start =[
 "               X---X    Current turn:                            ";
 "              /     \\                                            ";
@@ -56,9 +59,8 @@ let grid_to_board c =
   let (x,y) = c in
   (1 + 6 * (x/2) + (x mod 2) * 2, 6 + 4 * y - 2 * ((x+1)/2))
 
-(* Update a row so that the given pixel list overwrites pixels starting
+(* Update a row so that the given pixrow overwrites pixels starting
 at the given index.*)
-(* Update a row one pixel at a time. *)
 let rec write_row r s str =
   if s<=0 then
     match (r,str) with
@@ -72,7 +74,6 @@ let rec write_row r s str =
 
 (* Create a copy of the board where the input list is
 written horizontally starting at x,y.*)
-(* pixboard -> (int * int) -> int -> pixel -> pixboard *)
 let rec write_board pb s str =
   let (x,y) = s in
   if y>0 then
@@ -105,7 +106,7 @@ let print_row (r:pixrow) =
 let print_pixboard b =
   List.iter print_row b
 
-(* Create a copy of the board with the tile printed over it. *)
+(* Create a copy of the board with the provided tile printed over it. *)
 let print_tile pb t =
   let (x,y) = grid_to_board t.corner in
   let bg = (match t.env with
@@ -128,6 +129,7 @@ let print_tile pb t =
   if t.robber then
     write_board pb ((x+4),(y-1)) robber
    else pb
+
 (* Print a port onto the pixboard as a 2 character symbol
 marking the type of trade available and the rate. *)
 let print_port pb (p:port) =
@@ -141,7 +143,8 @@ let print_port pb (p:port) =
             |_ -> failwith "Unmatched port" in
   write_board pb (grid_to_board p.location) str
 
-
+(* Print the biome legend on the right side of the board. This can't
+be hardcoded in board_start because they need to be their own colors. *)
 let print_biomes pb =
   let legend = [
    ([('H',[yellow; on_black])],2);
@@ -153,7 +156,6 @@ let print_biomes pb =
   List.fold_left (fun p (s,y) -> write_board p (47,y) s) pb legend
 
 (* Initialize a new printed board with tile info and grid.*)
-(* pixboard -> board -> pixboard *)
 let print_board b =
   let pb = board_start in
   let pb = List.fold_left print_tile pb b.tiles in
@@ -161,8 +163,7 @@ let print_board b =
   List.fold_left print_port pb b.ports
 
 (* Create a copy of the board with the player's resources and trade rates
-printed in the correct place. *)
-(* pixboard -> player -> pixboard *)
+printed in the correct places. *)
 let print_resources pb (p:player) =
   (* resources start at 15 44 *)
   let (b,w,o,g,l)=p.resources in
@@ -177,7 +178,6 @@ let print_resources pb (p:player) =
 
 (* Create a copy of the board with the player's roads and settlements printed
 over it. *)
-(* pixboard -> player -> pixboard *)
 let print_player pb p =
   let st = match p.color with
   | Red -> [red; Bold; on_black]
@@ -204,6 +204,7 @@ let print_player pb p =
     write_board pb (r,c) (string_to_pix_st str st) in
   List.fold_left print_road pb p.roads
 
+(* Print the current player's color and victory points. *)
 let print_turn pb gs =
   let text, col = match gs.playerturn with
              |Red -> ("Red", red)
@@ -214,7 +215,8 @@ let print_turn pb gs =
   let pl = curr_player gs in
   write_board pb (52,9) (string_to_pix (string_of_int pl.victory_points))
 
-
+(* Call all the other print functions to generate a pixboard and then
+actually display it. *)
 let print_game gs =
   let pb = print_board gs.game_board in
   let pb = print_resources pb (match_color gs.playerturn gs.players) in
@@ -222,7 +224,7 @@ let print_game gs =
   let pb = print_turn pb gs in
   print_pixboard pb
 
-(* Add amt of the specified resource to player. *)
+(* Add amt of the specified environment's resource to player. *)
 let change_resource_for_distr (plyr: player) (env:environment)
 (amt: int) : player =
   match (env, plyr.resources) with
@@ -252,6 +254,7 @@ let rec collect_player_resource (players: player list)
   List.fold_left (fun (pl:player list) (t:tile) -> dist_resources
     pl t.towns t.env) players ts
 
+(* Parse dcard names *)
 let rec match_to_Dcard () =
   let _ = print_string_w "Which dcard will you play? " in
   let cmd = get_cmd () in
@@ -266,6 +269,7 @@ let rec match_to_Dcard () =
                   or exit to play nothing.\n"
   in match_to_Dcard ()
 
+(* Merge two 5-ples taking the min value in each position. *)
 let min5 j k =
   let (a,b,c,d,e) = j in
   let (v,w,x,y,z) = k in
@@ -320,6 +324,7 @@ let rec trade_repl gs : gamestate =
     trade_repl (prep_trade gs
       (List.nth cmd 2) (List.nth cmd 3) (int_of_string (List.nth cmd 1)))
 
+(* Move the robber to a new tile. *)
 let rec get_robber_pos () =
   let _ = print_string_w
     ("Enter the tile location where you want to move the robber:\n") in
@@ -336,6 +341,7 @@ let rec get_robber_pos () =
   else
     tile
 
+(* Perform the production stage of the game. *)
 let rec prod_repl (gs : gamestate) : gamestate =
 let gs = update_exchanges gs in
 if (curr_player gs).a_i then
@@ -367,12 +373,14 @@ else
                 | None -> gs)
   | _ -> gs
 
+(* Print the current player's card inventory. *)
 let print_cards gs =
   let pl = curr_player gs in
   let _ = print_string_w "Your cards are: " in
   let _ = List.map (fun c -> print_string_w ((string_of_card c)^", ")) pl.dcards in
   print_endline ""
 
+(* Perform the build and trade stage of the game. *)
 let rec build_repl (gs : gamestate) : gamestate =
 if (curr_player gs).a_i then
   let _ = print_endline("build") in
@@ -423,6 +431,7 @@ let rec hasWon (players: player list): bool =
             then true
            else hasWon t
 
+(* Top level function which calls into the other repls. *)
 let rec main_repl (gs: gamestate) : gamestate =
   match gs.game_stage with
   | Start -> main_repl (start_repl gs)
@@ -434,6 +443,8 @@ let rec main_repl (gs: gamestate) : gamestate =
                   else main_repl (build_repl gs)
   | End -> game_complete gs
 
+
+(* Launcher function to choose number of players. *)
 let rec num_ai_repl () =
   let _ = print_endline
     ("How many AI players would you like (There are 4 total players)?") in
