@@ -2,9 +2,10 @@ open Tile
 open Port
 open Dcard
 
-(* Board module that contains a list of tiles, a list of ports, and
-	a list of dcards. *)
-
+(* Board module that represents all the player-independent state
+of the board. The tiles also replicate some state from the players
+to remember which players receive resources when their collect_on
+number is rolled.*)
 type board = {
 	tiles : tile list; (* A list of tiles on the board *)
 	ports : port list; (* A list of ports on the board *)
