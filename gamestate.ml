@@ -949,7 +949,7 @@ let has_dcards_to_play (player: player) : dcard list =
 let ai_play_dcard (state: gamestate) (dcards: dcard list) : gamestate =
 let temp = List.nth dcards (Random.int (List.length dcards)) in
 if(temp = (Progress_Card(Monopoly))) then let _ = 
-print_string "AI played Monopoly" in play_dcard state (temp)
+print_string "AI played Monopoly \n" in play_dcard state (temp)
 else play_dcard state (temp)
 
 (* AI conducts trading. For the first resource that is higher than its exchange
