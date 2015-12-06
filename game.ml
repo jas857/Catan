@@ -367,6 +367,11 @@ else
                 | None -> gs)
   | _ -> gs
 
+let print_cards gs =
+  let pl = curr_player gs in
+  let _ = print_string_w "Your cards are: " in
+  let _ = List.map (fun c -> print_string_w ((string_of_card c)^", ")) pl.dcards in
+  print_endline ""
 
 let rec build_repl (gs : gamestate) : gamestate =
 if (curr_player gs).a_i then
@@ -375,8 +380,8 @@ if (curr_player gs).a_i then
 else
   let _ = print_game gs in
   let _ = print_string_w
-   "type buy, play, trade, or end to build something, play a development card,
-    begin trading or end your turn\n" in
+   "type buy, play, view, trade, or end to build something, play a development
+    card, view your cards, or begin trading or end your turn\n" in
   let lowercaseCmd = String.lowercase (get_cmd ()) in
   match lowercaseCmd with
   |"buy" -> let _ = print_string_w
@@ -390,6 +395,7 @@ else
                               else ans
                 | None -> gs)
   |"trade" -> build_repl (trade_repl gs)
+  |"view" -> let _ = print_cards gs in build_repl gs
   |"end" -> change_stage gs
 
   | _ -> gs
@@ -405,9 +411,9 @@ let game_complete (gs:gamestate) =
   |Blue -> let _ = print_string_w
   "Congratulations Blue You Have Been Victorious!" in {gs with game_stage = End}
   |White -> let _ = print_string_w
- "Congratulations White You Have Been Victorious!" in {gs with game_stage = End}
+ "Congratulations Cyan You Have Been Victorious!" in {gs with game_stage = End}
   |Orange -> let _ = print_string_w
-"Congratulations Orange You Have Been Victorious!" in {gs with game_stage = End}
+"Congratulations Green You Have Been Victorious!" in {gs with game_stage = End}
 
 (*returns true if a player has won*)
 let rec hasWon (players: player list): bool =
