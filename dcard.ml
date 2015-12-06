@@ -16,11 +16,15 @@ type dcard =
   | Progress_Card of pcard
   | Victory_Card of (name * description)
 
+(* Removes [card] from [dcards] and outputs the new list *)
 let rec remove_from_list (dcards: dcard list) (card: dcard) : dcard list =
   match dcards with
   | h::t -> if h = card then t else h::(remove_from_list t card)
   | [] -> []
 
+(* Prints out [message].
+    Gets input for monpoly or year of plenty, depending on [monopoly] being true
+    or false. *)
 let rec get_input (monopoly: bool) (message: string) : int =
   print_string message;
   let input = read_line() in
@@ -34,6 +38,7 @@ let rec get_input (monopoly: bool) (message: string) : int =
           else get_input monopoly message
     else get_input monopoly message
 
+(*  *)
 let rec initialize_dcards_helper ans =
     let _ = Random.self_init () in
     let randomList = List.map (fun x -> ((Random.int 2000), x)) ans in
