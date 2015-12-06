@@ -64,11 +64,11 @@ let rec write_row r s str =
     match (r,str) with
     |(hd::tl,a::b)-> a::(write_row tl (s-1) b)
     |(_,[]) -> r
-    |([],_) -> failwith "Printing outside the board"
+    |([],_) -> []
   else
     match r with
     |hd::tl -> hd::(write_row tl (s-1) str)
-    |_ -> failwith "Printing outside the board"
+    |_ -> []
 
 (* Create a copy of the board where the input list is
 written horizontally starting at x,y.*)
@@ -78,11 +78,11 @@ let rec write_board pb s str =
   if y>0 then
     match pb with
     |hd::tl -> hd::(write_board tl (x,y-1) str)
-    |_ -> failwith "Printing outside the board"
+    |_ -> []
   else
     match pb with
     |row::tl -> (write_row row x str)::tl
-    |_ -> failwith "Printing outside the board"
+    |_ -> []
 
 (* Create a copy of the board where the input pixel overwrites pixels
 from x,y to x+l,y *)
@@ -283,10 +283,10 @@ let update_exchanges gs =
 (* Perform the start stage of the game. When complete, every player
 should have two settlements and two roads. *)
 let rec start_repl gs =
+let gs = update_exchanges gs in
 if (curr_player gs).a_i then
   ai_start_stage gs
 else
-  let gs = update_exchanges gs in
   let rec start_settlement gs : gamestate=
     let _ = print_game gs in
     let coor = get_settlement_info () in
@@ -315,7 +315,7 @@ let rec trade_repl gs : gamestate =
   if (List.length cmd) <> 4 then
     trade_repl gs
   else
-    trade_repl (trade gs
+    trade_repl (prep_trade gs
       (List.nth cmd 2) (List.nth cmd 3) (int_of_string (List.nth cmd 1)))
 
 let rec get_robber_pos () =
@@ -335,11 +335,11 @@ let rec get_robber_pos () =
     tile
 
 let rec prod_repl (gs : gamestate) : gamestate =
+let gs = update_exchanges gs in
 if (curr_player gs).a_i then
   let _ = print_endline("roll") in
   ai_roll_or_play gs
 else
-  let gs = update_exchanges gs in
   let _ = print_game gs in
   let _ = print_string_w
     "type roll or play to roll the die or play a development card.\n" in
@@ -353,7 +353,7 @@ else
              let _ = printf [white;Bold] "You rolled a %d\n" rnd in
              if rnd = 7 then
               let tl = get_robber_pos () in
-              move_robber gs tl
+              change_stage (move_robber gs tl)
              else
              change_stage gs
 
@@ -426,12 +426,12 @@ let rec main_repl (gs: gamestate) : gamestate =
                   else main_repl (build_repl gs)
   | End -> game_complete gs
 
-let rec num_ai_repl (): int =
+let rec num_ai_repl () =
   let _ = print_endline
     ("How many AI players would you like (There are 4 total players)?") in
   let input = read_line () in
   if is_int input then
-    let i = int_of_string input
+    let i = int_of_string input in
     if i >= 0 && i <= 4 then
       let gs = {playerturn=Red;
                players = initialize_ai_players i;
@@ -440,7 +440,7 @@ let rec num_ai_repl (): int =
                longest_road_claimed=false;
                largest_army_claimed=false} in
       main_repl gs
-    else num_ai_repl
-  else num_ai_repl
+    else num_ai_repl ()
+  else num_ai_repl ()
 
-let _ = num_ai_repl
+let _ = num_ai_repl ()

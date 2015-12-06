@@ -383,12 +383,8 @@ let str_to_resource s =
   |"lumber" -> 4
   | _ -> failwith "invalid resource name."
 
-(* spend and earn are resource names in lower case, amt is the amount
-of spend to remove. Rounds down if not enough of spend is available. *)
-let trade gs spend earn amt =
+let trade gs sp ea amt =
   let pl = curr_player gs in
-  let sp = str_to_resource spend in
-  let ea = str_to_resource earn in
   if sp=ea then gs else
   let (s,e) = (get_resource pl sp, get_resource pl ea) in
   let exch = get_exchange pl sp in
@@ -396,8 +392,12 @@ let trade gs spend earn amt =
   change_player gs
     (change_resource (change_resource pl sp (-exch*credits)) ea credits)
 
-
-
+(* spend and earn are resource names in lower case, amt is the amount
+of spend to remove. Rounds down if not enough of spend is available. *)
+let prep_trade gs spend earn amt =
+  let sp = str_to_resource spend in
+  let ea = str_to_resource earn in
+  trade gs sp ea amt
 
 (* Add amt of the specified resource to player. *)
 let change_resource_for_distr (plyr: player) (env:environment)
@@ -491,7 +491,8 @@ Also checks if there is a town there. Also checks if it is off the board *)
 (* AI move position to build road *)
 let rec move_position (state: gamestate) (plyr: player) (depth:int): gamestate =
   if depth > 5 then
-    state
+    let plyr = change_resources plyr (1,0,0,0,1) in
+                  change_player state plyr
   else
   let start = plyr.ai_vars.curpos in
   let _ = ai_update_directions state plyr in
@@ -769,17 +770,24 @@ let ai_check_build_road (state: gamestate) (player: player): gamestate =
     ai_check_build_dcard state player
 
 let ai_check_build_settlement (state: gamestate) (player: player) : gamestate =
+  let _ = print_endline(string_of_int (get_resource player 0)) in
+  let _ = print_endline(string_of_int (get_resource player 1)) in
+  let _ = print_endline(string_of_int (get_resource player 3)) in
+  let _ = print_endline(string_of_int (get_resource player 4)) in
   if (get_resource player 0) > 0 && (get_resource player 1) > 0 &&
       (get_resource player 3) > 0 && (get_resource player 4) > 0 then
       (* Build Settlement *)
       let rec match_roads (roads: (coordinates * coordinates) list) =
       (match roads with
       | h::t -> if can_build_settlement state (fst h) then
+                  let _ = print_endline ("settlements1") in
                     ai_build_settlement state player (fst h) false
                 else if can_build_settlement state (snd h) then
+                let _ = print_endline ("settlements2") in
                     ai_build_settlement state player (snd h) false
                 else match_roads t
-      | [] -> state) in
+      | [] -> let _ = print_endline ("settlements4") in state) in
+      let _ = print_endline ("settlements3") in
       match_roads player.roads
   else
     ai_check_build_road state player
@@ -827,7 +835,33 @@ let has_dcards_to_play (player: player) : dcard list =
 let ai_play_dcard (state: gamestate) (dcards: dcard list) : gamestate =
   play_dcard state (List.nth dcards (Random.int (List.length dcards)))
 
+let ai_trade (state: gamestate): gamestate =
+  let player = curr_player state in
+  let (a,b,c,d,e) = player.resources in
+    if a >= (get_exchange player 0) then
+      let _ = print_endline ("ai trade") in
+      trade state (get_exchange player 0) 0 (min_resource player)
+    else
+    if b >= (get_exchange player 1) then
+    let _ = print_endline ("ai trade") in
+      trade state (get_exchange player 1) 1 (min_resource player)
+    else
+    if c >= (get_exchange player 2) then
+    let _ = print_endline ("ai trade") in
+      trade state (get_exchange player 2) 2 (min_resource player)
+    else
+    if d >= (get_exchange player 3) then
+    let _ = print_endline ("ai trade") in
+      trade state (get_exchange player 3) 3 (min_resource player)
+    else
+    if e >= (get_exchange player 4) then
+    let _ = print_endline ("ai trade") in
+      trade state (get_exchange player 4) 4 (min_resource player)
+    else
+    state
+
 let ai_build_or_play (state: gamestate): gamestate =
+  let state = ai_trade state in
   let player = curr_player state in
   let dcards_to_play = has_dcards_to_play player in
   if (List.length dcards_to_play) > 0 then

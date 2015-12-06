@@ -40,7 +40,7 @@ val pick_dcard : gamestate -> gamestate
 val build : gamestate -> string -> gamestate
 
 (* Trade among players/bank *)
-val trade : gamestate -> string -> string -> int -> gamestate
+val prep_trade : gamestate -> string -> string -> int -> gamestate
 
 (* Have the AI make a move *)
 val a_i_makemove : gamestate -> gamestate
