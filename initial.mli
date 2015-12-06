@@ -4,6 +4,9 @@ open Gamestate
 open Player
 open Town
 
+(* This file contains a number of gamestates we used to quickly launch
+into and test different game stages. *)
+
 (* A gamestate which starts off with lots of resources and nothing
 on the board, in Trade stage. *)
 val trade_gs : gamestate
