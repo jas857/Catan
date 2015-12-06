@@ -35,7 +35,7 @@ let board_start =[
 " X   A   X---X   F   X---X   L   X  Forest:    X       \\     /   ";
 "  \\     /     \\     /     \\     /   Desert:    X        1---2    ";
 "   X---X   E   X---X   K   X---X                                 ";
-"  /     \\     /     \\     /     \\                                ";
+"  /     \\     /     \\     /     \\   Victory Points:              ";
 " X   D   X---X   J   X---X   P   X                               ";
 "  \\     /     \\     /     \\     /                                ";
 "   X---X   I   X---X   O   X---X                                 ";
@@ -210,7 +210,9 @@ let print_turn pb gs =
              |Blue -> ("Blue", blue)
              |White -> ("Cyan", cyan)
              |Orange -> ("Green", green) in
-  write_board pb (38,0) (string_to_pix_st text [col;Bold;on_black])
+  let pb = write_board pb (38,0) (string_to_pix_st text [col;Bold;on_black]) in
+  let pl = curr_player gs in
+  write_board pb (52,9) (string_to_pix (string_of_int pl.victory_points))
 
 
 let print_game gs =

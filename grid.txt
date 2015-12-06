@@ -7,7 +7,7 @@
  X   A   X---X   F   X---X   L   X  Forest:    X       \     /
   \     /     \     /     \     /   Desert:    X        1---2
    X---X   E   X---X   K   X---X
-  /     \     /     \     /     \
+  /     \     /     \     /     \   Victory Points: X
  X   D   X---X   J   X---X   P   X
   \     /     \     /     \     /
    X---X   I   X---X   O   X---X
