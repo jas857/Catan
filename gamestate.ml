@@ -221,7 +221,7 @@ let rec update_longest_road (gs: gamestate): gamestate =
     then 
       if(newHolder.road_size = 5) 
         then change_player {gs with longest_road_claimed = true}
-          {newHolder with victory_points = newHolder2.victory_points + 2}
+          {newHolder with victory_points = newHolder.victory_points + 2}
         else gs
   else 
     let newHolder2 = {newHolder with longest_road = true} in
