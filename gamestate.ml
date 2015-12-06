@@ -240,7 +240,7 @@ let rec update_longest_road (gs: gamestate): gamestate =
         {newHolder2 with victory_points = newHolder2.victory_points + 2})
       else
         let newGs = change_player gs newHolder2 in
-        (change_player gs oldHolder2)
+        (change_player newGs oldHolder2)
     
   
 (*builds the actual road in game state*)
