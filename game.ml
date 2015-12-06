@@ -259,7 +259,9 @@ let rec match_to_Dcard () =
   |"year of plenty" -> Some(Progress_Card(Year_of_plenty))
   |"road" -> Some(Progress_Card(Road_Building))
   |"exit" -> None
-  | _ -> let _ = print_string_w "That doesn't appear to be a dcard type. Please choose from [knight, monopoly, year of plenty, road] or exit to play nothing.\n"
+  | _ -> let _ = print_string_w "That doesn't appear to be a dcard type.
+                  Please choose from [knight, monopoly, year of plenty, road]
+                  or exit to play nothing.\n"
   in match_to_Dcard ()
 
 let min5 j k =
@@ -305,7 +307,8 @@ else
 "trade X brick wool" will spend at most X bricks to purchase wool. *)
 let rec trade_repl gs : gamestate =
   let _ = print_game gs in
-  let _ = print_string_w "Please enter a command in the following format, or \"end\" to end trading:
+  let _ = print_string_w "Please enter a command in the following format, or
+    \"end\" to end trading:
     \"trade [int] [resource to spend] [resource to purchase]\"\n" in
   let cmd = split_char ' ' (get_cmd ()) in
   if List.nth cmd 0 = "end" then gs else
@@ -370,10 +373,12 @@ if (curr_player gs).a_i then
 else
   let _ = print_game gs in
   let _ = print_string_w
-   "type buy, play, trade, or end to build something, play a development card, begin trading or end your turn\n" in
+   "type buy, play, trade, or end to build something, play a development card,
+    begin trading or end your turn\n" in
   let lowercaseCmd = String.lowercase (get_cmd ()) in
   match lowercaseCmd with
-  |"buy" -> let _ = print_string_w "What would you like to buy? [road settlement city dcard]?\n" in
+  |"buy" -> let _ = print_string_w
+            "What would you like to buy? [road settlement city dcard]?\n" in
               build gs (get_cmd ())
 
   |"play" -> (match (match_to_Dcard ()) with
@@ -393,10 +398,14 @@ let game_complete (gs:gamestate) =
   let _ = print_game gs in
   let winner = gs.playerturn in
   match winner with
-  |Red -> let _ = print_string_w "Congratulations Red You Have Been Victorious!" in {gs with game_stage = End}
-  |Blue -> let _ = print_string_w "Congratulations Blue You Have Been Victorious!" in {gs with game_stage = End}
-  |White -> let _ = print_string_w "Congratulations White You Have Been Victorious!" in {gs with game_stage = End}
-  |Orange -> let _ = print_string_w "Congratulations Orange You Have Been Victorious!" in {gs with game_stage = End}
+  |Red -> let _ = print_string_w
+   "Congratulations Red You Have Been Victorious!" in {gs with game_stage = End}
+  |Blue -> let _ = print_string_w
+  "Congratulations Blue You Have Been Victorious!" in {gs with game_stage = End}
+  |White -> let _ = print_string_w
+ "Congratulations White You Have Been Victorious!" in {gs with game_stage = End}
+  |Orange -> let _ = print_string_w
+"Congratulations Orange You Have Been Victorious!" in {gs with game_stage = End}
 
 (*returns true if a player has won*)
 let rec hasWon (players: player list): bool =

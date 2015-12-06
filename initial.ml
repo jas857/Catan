@@ -9,7 +9,8 @@ open Tile
 the board reflect the players' hardcoded towns in fast_gs. *)
 let rebuild_towns gs =
   let rebuild (tl:tile) (pl:player) =
-    let towns = List.filter (fun t -> List.mem t.location (corners tl)) pl.towns in
+    let towns = List.filter
+      (fun t -> List.mem t.location (corners tl)) pl.towns in
     let num = List.fold_left (+) 0 (List.map (fun t -> t.pickup) towns) in
     {tl with towns=(pl.color,num)::tl.towns} in
   {gs with game_board=

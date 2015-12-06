@@ -39,7 +39,8 @@ type player = {
 
 let rec change_player_list (lst: player list) (plyr: player) : player list =
   match lst with
-  | h::t -> if h.color = plyr.color then plyr::t else h::(change_player_list t plyr)
+  | h::t -> if h.color = plyr.color then plyr::t
+            else h::(change_player_list t plyr)
   | [] -> []
 
 let split_resource (r:rsrc) (resource: int) : int =
@@ -88,14 +89,14 @@ let rec update_largest_army (players: player list) (changing_player: player) =
               else
                 h::(update_largest_army t changing_player)
 
-let init_non_ai_player (c:color) = {roads_left = 15; roads = []; settlements_left = 5;
-  cities_left = 4; towns = []; victory_points = 0;
+let init_non_ai_player (c:color) = {roads_left = 15; roads = [];
+  settlements_left = 5; cities_left = 4; towns = []; victory_points = 0;
   dcards = []; resources = (0,0,0,0,0); exchange = (4,4,4,4,4);
-  color = c; a_i = false; ai_vars = {curpos = (0,0); left = 0; right = 0; up = 0;
+  color = c; a_i = false; ai_vars = {curpos = (0,0); left = 0; right = 0; up =0;
   down = 0}; army_size = 0; largest_army = false;
   road_size = 0; longest_road = false}
 
-let init_ai_player (c:color) = {roads_left = 15; roads = []; settlements_left = 5;
+let init_ai_player (c:color) = {roads_left =15; roads = []; settlements_left =5;
   cities_left = 4; towns = []; victory_points = 0;
   dcards = []; resources = (0,0,0,0,0); exchange = (4,4,4,4,4);
   color = c; a_i = true; ai_vars = {curpos = (0,0); left = 0; right = 0; up = 0;
