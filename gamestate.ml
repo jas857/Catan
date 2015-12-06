@@ -21,15 +21,18 @@ type gamestate = {
   largest_army_claimed : bool
 }
 
-(*picks out the player with a corresponding color *)
+(* Takes color [c] and player list [pl] and outputs the player that has
+    color [c] *)
 let rec match_color (c:color) (pl:player list) =
   match pl with
   |[] -> failwith "No player with that color"
   | h::t -> if h.color = c then h else match_color c t
 
+(* Calls match_color to return the player whose turn it in with the input
+    [gs] being the gamestate *)
 let curr_player gs = match_color gs.playerturn gs.players
 
-(* returns the gamestate with the next player's turn if going forward,
+(* Returns the gamestate with the next player's turn if going forward,
 can be used for finding next player turn in start stage and play stage *)
 let next_forward (gs:gamestate) =
   let c = gs.playerturn in
@@ -41,8 +44,8 @@ let next_forward (gs:gamestate) =
              then gs
              else {gs with playerturn = Red}
 
-  (* returns the gamestate with next player's turn if going backward
-  used only for start stage *)
+  (* Returns the gamestate with next player's turn if going backward
+      Used only for start stage *)
 let next_backward (gs:gamestate) =
   let c = gs.playerturn in
   match c with
@@ -51,7 +54,7 @@ let next_backward (gs:gamestate) =
   |White -> {gs with playerturn = Blue}
   |Orange -> {gs with playerturn = White}
 
-(*returns a gamestate with the new players turn during the start stage *)
+(* Returns a gamestate with the new players turn during the start stage *)
 let choose_next_start (gs:gamestate) =
   let a = curr_player gs in
   let ar = a.roads_left in
@@ -64,13 +67,13 @@ let choose_next_start (gs:gamestate) =
   else
   failwith "Change_stage called at incorrect time"
 
-  (* Change the turn to the next player during play phase *)
+(* Change the turn to the next player during play phase *)
 let change_turn (gs:gamestate) =
   {(next_forward gs) with game_stage = Production}
 
 
-(* Change the stage of the game, should only be called when a player has
-has finished a stage and the stage should be changed *)
+(* Change the stage of the game from Start->Production->Build
+    Or changes the turn from one player to another during Build*)
 let change_stage (gs:gamestate) =
   match gs.game_stage with
   |Start -> choose_next_start gs
@@ -79,13 +82,17 @@ let change_stage (gs:gamestate) =
   |End -> gs
 
 
-(* returns tile given a character location of the tile *)
+(* Returns tile given a character location [s] of the tile and list [tiles]*)
 let rec get_tile (tiles:tile list) s =
   match tiles with
   |h::t -> if h.loc = (Char.uppercase s) then Some h else get_tile t s
   |_ -> None
 
-(* adds a new town tuple to a tile town list *)
+(* Adds a new town tuple to a tile town list given gamestate [gs],
+    tile to add onto [t] and town to add [ci].
+    [ci] denotes the color of the player (color) and the type of town:
+      settlement = 1
+      town = 2*)
 let add_town (gs:gamestate) (t:tile) (ci:color*int) : gamestate =
   let newT = {t with towns = (ci::(t.towns))} in
   let temp_board = gs.game_board in
@@ -94,8 +101,8 @@ let add_town (gs:gamestate) (t:tile) (ci:color*int) : gamestate =
   {gs with game_board = new_board}
 
 
-(* removes robber from current location, and then places robber in new
-location given by the input string*)
+(* Removes robber from current location, and then places robber in new
+location given by the input location character [c]*)
 let rec move_robber (gs: gamestate) (c:tile_location): gamestate =
   let newRobLoc = get_tile (gs.game_board).tiles c in
   match newRobLoc with
@@ -109,13 +116,14 @@ let rec move_robber (gs: gamestate) (c:tile_location): gamestate =
     {gboard with tiles = rebuild_tile_list robberless nrl} in
     {gs with game_board = newBoard}
 
-
-
+(* Takes in player [plyr] and finds the player with [plyr]'s color in [gs], and
+    replaces that player with [plyr] *)
 let rec change_player (state: gamestate) (plyr: player) : gamestate =
   let lst = change_player_list (state.players) (plyr) in
   {state with players = lst}
 
-
+(* Checks to see if [changing_player] has the largest army in [state],
+    if so, update victory points and largest army fields accordingly *)
 let check_largest_army (state: gamestate) (changing_player: player): gamestate =
   let new_players = update_largest_army state.players changing_player in
   if state.players = new_players then
@@ -131,6 +139,7 @@ let check_largest_army (state: gamestate) (changing_player: player): gamestate =
     else change_player state changing_player
   else {state with players = new_players}
 
+(* Search through list of towns to find town at [coor] *)
 let rec search_towns (coor: coordinates) (towns: town list): bool =
   match towns with
   | [] -> false
@@ -138,15 +147,15 @@ let rec search_towns (coor: coordinates) (towns: town list): bool =
               then true
             else search_towns coor t
 
-(*check whether or not it is possible to build a road where specified*)
+(* Check whether or not it is possible for [p] to build a road at [coor]*)
 let is_valid_build_road (coor: coordinates) (p : player): bool =
   let (starts,ends) = List.split p.roads in
   let towns = List.map (fun t -> t.location) p.towns in
   ((List.mem coor starts) || (List.mem coor ends) || (List.mem coor towns)) &&
     in_bounds coor
 
-
-(* Checks that a road doesn't already exist on the specified edge. *)
+(* Checks that a road doesn't already exist on the specified edge denoted by
+    [road] *)
 let rec is_overlap_road (road: coordinates * coordinates)
 (players: player list) : bool =
   match players with
@@ -156,6 +165,8 @@ let rec is_overlap_road (road: coordinates * coordinates)
         then true
         else is_overlap_road road t
 
+(* Gets input for position, given by a tile letter followed by a number. Ex: A5.
+    Converts that input into a coordinates type *)
 let rec get_pos () =
   let start_tile = read_line () in
   if(String.length start_tile <> 2) then
@@ -172,6 +183,7 @@ let rec get_pos () =
   let s_corner = int_of_string (Char.escaped start_tile.[1]) in
   conv s_tile s_corner
 
+(* Gets input of two coordinates (given by get_pos) to build a road on. *)
 let rec get_road_info () :(coordinates * coordinates) =
   let _ = print_string
   "Please enter the point you would like to start your road on: " in
@@ -181,7 +193,7 @@ let rec get_road_info () :(coordinates * coordinates) =
   let last = get_pos () in
   (start, last)
 
-(*says if road can be built at given coordinates*)
+(* Says if road can be built from [fst] to [lst] in gamestate [state]*)
 let can_build_road (fst: coordinates)
 (lst: coordinates) (state: gamestate) : bool =
   if (not (List.mem fst oob)) && (not (List.mem lst oob)) then
@@ -192,10 +204,7 @@ let can_build_road (fst: coordinates)
   && List.mem lst (adjacents fst)
   else false
 
-(*modifies the gamestate to include the built road*)
-
-(*builds the actual road in game state*)
-(*returns who has the longest road*)
+(* Returns player with longest road*)
 let rec who_has_longest_road (players: player list) (plyr: player) =
   match players with
   |[] -> plyr
@@ -203,7 +212,7 @@ let rec who_has_longest_road (players: player list) (plyr: player) =
             then h
            else who_has_longest_road t plyr
 
-(*returns who had the longest road prior to the new road being built*)
+(* Returns who had the longest road prior to the new road being built *)
 let rec old_longest_road_holder (players: player list) (plyr: player) =
   match players with
   |[] -> plyr
@@ -211,7 +220,7 @@ let rec old_longest_road_holder (players: player list) (plyr: player) =
             then h
            else old_longest_road_holder t plyr
 
-(*changes gamestate to update victory
+(* Changes gamestate [gs] to update victory
 points and booleans based on road being built*)
 let rec update_longest_road (gs: gamestate): gamestate =
   let currentP = curr_player gs in
@@ -243,7 +252,7 @@ let rec update_longest_road (gs: gamestate): gamestate =
         (change_player newGs oldHolder2)
 
 
-(*builds the actual road in game state*)
+(* Builds the road in game state from fst(coor) to snd(coor)*)
 let rec build_road (state: gamestate)
 (coor: (coordinates * coordinates)): gamestate =
   let (startTileCoor, endTileCoor) = coor in
@@ -255,9 +264,8 @@ let rec build_road (state: gamestate)
   let newGs = change_player state updatePlayer in
   update_longest_road newGs
 
-
-
-(*if the tile contains the town then add to the towns list of the tile*)
+(* Loop through tiles, if a tile's corners contain the coordinates of the town
+    denoted by [coor], then add the town to the towns list of the tile *)
 let rec settlement_helper (tiles: tile list)
  (coor: coordinates) (clr: color) : tile list =
   match tiles with
@@ -266,23 +274,31 @@ let rec settlement_helper (tiles: tile list)
     then {h with towns = (clr, 1)::(h.towns)}::(settlement_helper t coor clr)
     else h::(settlement_helper t coor clr)
 
+(* Calls get_pos to get coordinates for where to build a settlement *)
 let rec get_settlement_info () : coordinates =
   let _ = print_string
     "Please enter the point you would like to build your settlement on: " in
   get_pos ()
 
+(* Checks to see if a settlement can be build at [coor] *)
 let can_build_settlement (gs: gamestate) (coor: coordinates): bool =
   if not (in_bounds coor) then false else
   let adjs = adjacents coor in
+  (* Checks to see if any players have a town either at that location or at the
+      adjacent corners *)
   let blocks_build (pl:player) =
     any (fun t -> List.mem t.location adjs) pl.towns in
   not (any blocks_build gs.players)
 
+(* Returns true if a location [coor] is empty *)
 let location_empty (gs: gamestate) (coor: coordinates) : bool =
+  (* Checks to see if any players have a town on the location [coor] *)
   let town_on_loc (plyr: player) =
     any (fun t -> t.location = coor) plyr.towns in
   not (any town_on_loc gs.players)
 
+(* Builds a settlement at [coor]. If [free] then do not deduct resources, this
+    is only used for the start stage *)
 let rec build_settlement (gs: gamestate) (coor: coordinates)
                          (free: bool): gamestate =
   let currentPlayer = curr_player gs in
@@ -295,9 +311,7 @@ let rec build_settlement (gs: gamestate) (coor: coordinates)
   {gs with game_board = {gs.game_board with
     tiles = settlement_helper gs.game_board.tiles coor currentPlayer.color}}
 
-
-
-(*search for the old settlement in the player and replace with city*)
+(* Search for the old settlement at [coor] in the [towns] and replace with city*)
 let rec city_helper (towns: town list)
 (coor:coordinates) : town list =
   match towns with
@@ -305,19 +319,20 @@ let rec city_helper (towns: town list)
   | h::t -> if(h.location = coor) then {location = coor; pickup = 2}::t
             else h::(city_helper t coor)
 
+(* Calls get_pos to get coordinates for where to build a city *)
 let rec get_city_info (): (coordinates) =
   let _ = print_string
   "Please enter the corner where you would like to build your city: " in
   get_pos ()
 
-(*checks to see if we can build a city at the given location*)
+(* Checks to see if we can build a city at [coor]*)
 let can_build_city (gs: gamestate) (coor: coordinates) : bool =
   if not (in_bounds coor) then false else
   let currentPlayer = curr_player gs in
   any (fun t -> t.pickup=1 && t.location=coor) currentPlayer.towns
 
-
-(*builds the city by updating the tiles and updating the player*)
+(* Builds the city at [coor] by updating the tiles containing [coor]
+    and updating the player*)
 let rec build_city (gs: gamestate) (coor: coordinates) : gamestate =
   let currentPlayer = curr_player gs in
   let tempPlayer = {currentPlayer with
@@ -329,7 +344,8 @@ let rec build_city (gs: gamestate) (coor: coordinates) : gamestate =
   {gs with game_board = {gs.game_board with
     tiles = settlement_helper gs.game_board.tiles coor currentPlayer.color}}
 
-
+(* Pick a dcard at random in the gamestate [gs] and return a state with the
+    current player having that dcard *)
 let pick_dcard gs =
   let tempPlayer = curr_player gs in
   let card = List.hd gs.game_board.dcards in
@@ -344,14 +360,16 @@ let pick_dcard gs =
       {(curr_player gs) with victory_points =(curr_player gs).victory_points +1}
   | _ -> gs
 
+(* Subtract the cost of a dcard and return the updated gamestate *)
 let pick_dcard_subtract_cost (gs:gamestate): gamestate =
   let gs = pick_dcard gs in
   let currentPlayer = curr_player gs in
   let tempPlayer = change_resources currentPlayer (0,-1,-1,-1,0) in
   change_player gs tempPlayer
 
-
-(*handles all of the building, checking, and inputting*)
+(* Handles all of the building, checking, and inputting
+    [gs] is the gamestate input
+    [input] is the string that determines what to build*)
 let rec build (gs: gamestate) (input:string): gamestate =
   let player = curr_player gs in
   (match String.lowercase input with
@@ -370,8 +388,7 @@ let rec build (gs: gamestate) (input:string): gamestate =
               (*check if settlement can be built*)
                 then (build_settlement gs sCoor false)
               else let _ = print_string "cannot build a settlement here\n" in gs
-              (*if cannot build a settlement then return original gamegs*)
-
+              (*if cannot build a settlement then return original gamestate gs*)
              else let _ = print_endline ("Insufficient resources") in gs
 
   |"city" -> if (get_resource player 3) > 1 &&
@@ -380,7 +397,7 @@ let rec build (gs: gamestate) (input:string): gamestate =
               if (can_build_city gs cityCoor) (*check if can build city @ coor*)
                   then (build_city gs cityCoor) (*build city if can*)
               else let _ = print_string "cannot build a city here\n" in
-              gs (*if cannot build city then return original gamegs*)
+              gs (*if cannot build city then return original gamestate gs*)
 
             else let _ = print_endline ("Insufficient resources") in gs
   |"dcard" -> if (get_resource player 1) > 0 &&
@@ -390,13 +407,17 @@ let rec build (gs: gamestate) (input:string): gamestate =
             else let _ =print_endline ("Insufficient resources") in gs
   | _ -> gs)
 
+(* Play road building dcard to build two roads [r1] and [r2] *)
 let play_road_building (state:gamestate) (r1:(coordinates *coordinates))
 (r2:(coordinates * coordinates)): gamestate =
   let state = build_road state r1 in
   build_road state r2
 
 (* Transfer all of the specified resource to the current player,
-robbing everyone else.*)
+robbing everyone else.
+  [state] is the gamestate
+  [r] is the number of the resource to steal (0-4). These numbers are defined
+    below in str_to_resource *)
 let play_monopoly (state: gamestate) (r: int) : gamestate =
   List.fold_left (fun gs x ->
                   let pl = curr_player gs in
@@ -405,6 +426,8 @@ let play_monopoly (state: gamestate) (r: int) : gamestate =
                   let x = change_resource x r (-dr) in
                   change_player (change_player gs pl) x) state state.players
 
+(* Play year of plenty development card that gives the current player one of
+    [resource1] and [resource2] (with these numbers being 0-4) *)
 let play_year_plenty
   (state: gamestate) (resource1: int) (resource2: int) : gamestate =
   let plyr = curr_player state in
@@ -412,6 +435,7 @@ let play_year_plenty
   let plyr = change_resource plyr resource2 1 in
   change_player state plyr
 
+(* Returns the 0-4 number of the resource that [player] has the least of *)
 let min_resource (player: player) : int =
   let resources = [0;1;2;3;4] in
   let rec get_min (lst: int list)=
@@ -425,6 +449,7 @@ let min_resource (player: player) : int =
   | [] -> 0) in
   get_min resources
 
+(* Converts string [s] to resource number *)
 let str_to_resource s =
   match s with
   |"brick" -> 0
@@ -434,6 +459,11 @@ let str_to_resource s =
   |"lumber" -> 4
   | _ -> failwith "invalid resource name."
 
+(* [gs] is the gamestate
+   [sp] is the resource being traded away (0-4)
+   [ea] is the resource being traded for (0-4)
+   [amt] is the amount of the resource being traded away
+  Trades resources for the player with the "bank" *)
 let trade gs sp ea amt =
   let pl = curr_player gs in
   if sp=ea then gs else
@@ -443,14 +473,16 @@ let trade gs sp ea amt =
   change_player gs
     (change_resource (change_resource pl sp (-exch*credits)) ea credits)
 
-(* spend and earn are resource names in lower case, amt is the amount
-of spend to remove. Rounds down if not enough of spend is available. *)
+(* [gs] is the gamestate
+   [spend] is the string denoting the resource being traded away
+   [earn] is the string denoting the resource being traded for
+   [amt] is the amount of [spend] being traded away *)
 let prep_trade gs spend earn amt =
   let sp = str_to_resource spend in
   let ea = str_to_resource earn in
   trade gs sp ea amt
 
-(* Add amt of the specified resource to player. *)
+(* Add [amt] of the specified resource, denoted by [env] to [player]. *)
 let change_resource_for_distr (plyr: player) (env:environment)
 (amt: int) : player =
   match (env, plyr.resources) with
@@ -482,6 +514,8 @@ let rec collect_player_resource (players: player list)
 
 (* AI Functions *)
 
+(* AI builds settlement for [player] at [loc].
+    If [free], then do not deduct resources *)
 let ai_build_settlement
   (state:gamestate) (player: player) (loc:coordinates) (free:bool) =
   let gs = build_settlement state loc true in
@@ -490,6 +524,7 @@ let ai_build_settlement
   let _ = player.ai_vars.curpos <- loc in
   {gs with players = change_player_list gs.players player}
 
+(* AI builds road for [player] from [start] to [endpt] *)
 let ai_build_road
   (state:gamestate) (player:player) (start:coordinates) (endpt:coordinates) =
   let gs = (build_road state (start,endpt)) in
@@ -498,8 +533,11 @@ let ai_build_road
   let _ = player.ai_vars.curpos <- endpt in
   {gs with players = change_player_list gs.players player}
 
-
-(*Loop through tiles and record where they are in relation to current position*)
+(*Loop through [tiles] and record where they are in relation to current position
+    Set the player.ai_varr.up/down/left/right to the number of "good" tiles,
+     with the collect_on being betwen 4 and 10, to that direction of curpos.
+    curpos is the "position" of the player, which gets updated to the most
+      recent settlement of road built by the player*)
 let rec loop_tiles (tiles: tile list) (plyr: player) : unit =
     match tiles with
     | [] -> ()
@@ -526,6 +564,7 @@ let rec loop_tiles (tiles: tile list) (plyr: player) : unit =
                           let _ =(plyr.ai_vars.up <- plyr.ai_vars.up + 1) in
                           loop_tiles t plyr)
 
+(* Calls loop_tiles to update left/right/up/down directions for [plyr] *)
 let ai_update_directions (state: gamestate) (plyr: player) : unit =
   (plyr.ai_vars.left <- 0);
   (plyr.ai_vars.right <- 0);
@@ -533,13 +572,18 @@ let ai_update_directions (state: gamestate) (plyr: player) : unit =
   (plyr.ai_vars.down <- 0);
   loop_tiles state.game_board.tiles plyr
 
+(* Checks if the [coord] has a road coming from curpos into it.
+  Also checks if there is a town at [coord].
+  Also checks if it is off the board *)
 let can_move (state: gamestate) (coord: coordinates): bool =
   (can_build_road (curr_player state).ai_vars.curpos coord state)
   && location_empty state coord && not(List.mem coord oob)
-(* Checks if the coordinate has a road coming from curpos into it.
-Also checks if there is a town there. Also checks if it is off the board *)
 
-(* AI move position to build road *)
+(* AI moves position based on up/down/left/right of [plyr] and builds a road
+    there. If no roads can be build immediately next to curpos in the best
+    direction (the one with the highest number of good tiles), then change
+    curpos to a position on [plyr]'s chain of roads. Do this up to six times
+    with [depth] indicating which time it is on. *)
 let rec move_position (state: gamestate) (plyr: player) (depth:int): gamestate =
   if depth > 5 then
     let plyr = change_resources plyr (1,0,0,0,1) in
@@ -744,6 +788,7 @@ let rec move_position (state: gamestate) (plyr: player) (depth:int): gamestate =
                   let plyr = change_resources plyr (1,0,0,0,1) in
                   change_player state plyr
 
+(* Play development card [card] and call specific functions for which dcard *)
 let play_dcard (state: gamestate) (card: dcard) : gamestate =
   let player = curr_player state in
   if List.mem card player.dcards then
@@ -798,6 +843,8 @@ let play_dcard (state: gamestate) (card: dcard) : gamestate =
                   play_road_building state r1 r2))
   else let _ = print_endline "You do not have that dcard" in state
 
+(* AI [player] checks to see if it has enough resources to build a dcard,
+    if not, return the input gamestate [state] *)
 let ai_check_build_dcard (state: gamestate) (player: player) : gamestate =
   if (get_resource player 1) > 0 && (get_resource player 2) > 0 &&
       (get_resource player 3) > 0 then
@@ -805,6 +852,10 @@ let ai_check_build_dcard (state: gamestate) (player: player) : gamestate =
   else
     state
 
+(* AI [player] checks to see if it has enough resources to build a road,
+    if so, it calls move_position and checks if a road was built.
+    If either of these checks come up negative, then check if a dcard can be
+    built *)
 let ai_check_build_road (state: gamestate) (player: player): gamestate =
   if (get_resource player 0) > 0 && (get_resource player 4) > 0 then
     (* Build road *)
@@ -820,6 +871,10 @@ let ai_check_build_road (state: gamestate) (player: player): gamestate =
   else
     ai_check_build_dcard state player
 
+(* AI [player] checks to see if it has enough resources to build a settlement,
+    if so, it tries to build one and checks if a settlement was built.
+    If either of these checks come up negative, then check if a road can be
+    built *)
 let ai_check_build_settlement (state: gamestate) (player: player) : gamestate =
   let _ = print_endline(string_of_int (get_resource player 0)) in
   let _ = print_endline(string_of_int (get_resource player 1)) in
@@ -844,6 +899,8 @@ let ai_check_build_settlement (state: gamestate) (player: player) : gamestate =
   let _ = print_endline ("settlementsNONE") in
     ai_check_build_road state player
 
+(* Looks through the player's towns to see if any can be upgraded,
+    starting with the ones on tiles more likely to be rolled *)
 let rec ai_look_for_upgrades (state:gamestate) (num1:int) (num2:int):gamestate =
   if num1 > 12 || num2 < 2 then state
   else
@@ -860,6 +917,10 @@ let rec ai_look_for_upgrades (state:gamestate) (num1:int) (num2:int):gamestate =
     let toUpgrade = List.nth avail (Random.int (List.length avail)) in
     build_city state (toUpgrade.location)
 
+(* AI [player] checks to see if it has enough resources to build a city,
+    if so, it calls ai_look_for_upgrades and checks if a city was built.
+    If either of these checks come up negative then check if a settlement can be
+    built *)
 let ai_check_build_city (state: gamestate) (player: player) : gamestate =
   if (get_resource player 2) > 2 && (get_resource player 3) > 1 then
       (* Build city *)
@@ -867,6 +928,7 @@ let ai_check_build_city (state: gamestate) (player: player) : gamestate =
   else
     ai_check_build_settlement (state) (player)
 
+(* AI makes a building move in the order specified below *)
 let a_i_makemove (state: gamestate): gamestate =
   (* AI builds things in this order:
       1. City
@@ -876,17 +938,19 @@ let a_i_makemove (state: gamestate): gamestate =
   let player = curr_player state in
   ai_check_build_city state player
 
-(* Returns all playable Dcards *)
+(* Returns all playable Dcards of [player] *)
 let has_dcards_to_play (player: player) : dcard list =
   List.fold_left (fun lst d ->
     match d with Knight -> d::lst | Progress_Card _ -> d::lst | _ -> lst)
   []
   player.dcards
 
-(* Pick a random playable dcard and play it *)
+(* Pick a random playable dcard from [dcards] and play it *)
 let ai_play_dcard (state: gamestate) (dcards: dcard list) : gamestate =
   play_dcard state (List.nth dcards (Random.int (List.length dcards)))
 
+(* AI conducts trading. For the first resource that is higher than its exchange
+    rate, trade it for the resource with the least amount *)
 let ai_trade (state: gamestate): gamestate =
   let player = curr_player state in
   let (a,b,c,d,e) = player.resources in
@@ -907,6 +971,7 @@ let ai_trade (state: gamestate): gamestate =
     else
     state
 
+(* AI plays dcads if it has them, if not, it calls a_i_makemove *)
 let ai_build_or_play (state: gamestate): gamestate =
   let state = ai_trade state in
   let player = curr_player state in
@@ -918,6 +983,7 @@ let ai_build_or_play (state: gamestate): gamestate =
     (* Build *)
     change_stage (a_i_makemove state)
 
+(* AI plays dcards if it has them, if not, it rolls the dice *)
 let ai_roll_or_play (state: gamestate): gamestate =
   let player = curr_player state in
   let dcards_to_play = has_dcards_to_play player in
@@ -969,9 +1035,11 @@ let rec build_settlement_on_num
   let gs = match_tiles tiles state in
   if gs = state then build_settlement_on_num gs (num1+1) (num2-1) else gs
 
+(* Builds a settlement for the start stage using the helper function above *)
 let ai_start_stage_settlement (state: gamestate): gamestate =
   build_settlement_on_num state 8 6
 
+(* Builds a road for the start stage coming from the settlement made *)
 let ai_start_stage_road (state: gamestate): gamestate =
   let plyr = curr_player state in
   let start = plyr.ai_vars.curpos in
@@ -1012,6 +1080,7 @@ let ai_start_stage_road (state: gamestate): gamestate =
               {gs with players = change_player_list gs.players player}
             else failwith "Never happens in start stage"
 
+(* Builds a settlement and road for the AI in the start stage *)
 let ai_start_stage (state: gamestate): gamestate =
   let gs = ai_start_stage_settlement state in
   ai_start_stage_road gs

@@ -1,16 +1,22 @@
 open Utilities
 
-(* Name of development card *)
+(* Dcard module that contains information for development cards *)
+
+(* Name of victory card *)
 type name = string
 
-(* Description of development card *)
+(* Description of victory card *)
 type description = string
 
+(* Progress Card variant that contains the three types of progress cards
+    defined in the Catan rules *)
 type pcard =
   | Monopoly
   | Year_of_plenty
   | Road_Building
 
+(* Development Card variant that contains the three types of development cards
+    defined in the Catan rules *)
 type dcard =
   | Knight
   | Progress_Card of pcard
@@ -38,13 +44,14 @@ let rec get_input (monopoly: bool) (message: string) : int =
           else get_input monopoly message
     else get_input monopoly message
 
-(*  *)
+(* Randomly sorts list of dcards [ans] *)
 let rec initialize_dcards_helper ans =
     let _ = Random.self_init () in
     let randomList = List.map (fun x -> ((Random.int 2000), x)) ans in
     let sortedList = (List.sort compare randomList) in
     List.map (fun (x,y) -> y) sortedList
 
+(* Initialize list of development cards *)
 let initialize_dcards (): dcard list =
     let deckAns = [Knight; Victory_Card(("University", "A place of learning"));
     Knight; Victory_Card(("Chapel", "A place of worship"));
@@ -59,6 +66,7 @@ let initialize_dcards (): dcard list =
     Knight; Knight] in
     initialize_dcards_helper deckAns
 
+(* Convert dcard [c] to a string *)
 let string_of_card c =
   match c with
   |Knight -> "knight"
