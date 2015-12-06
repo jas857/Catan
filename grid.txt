@@ -20,10 +20,7 @@
               \     /               Lumber: XX  XX
                X---X
 
-
-Prompts below here
-
-Coord->grid
+Coord->grid examples
 0 0     1  6
 1 0     3  4
 2 0     7  4
@@ -34,28 +31,30 @@ Coord->grid
 0 1     1 10
 1 1     3 8
 
+Conversion equations:
 X = 1 + 6 * (x/2) + (x%2) * 2
 Y = 6 + 4 * y---2 * ((x+1)/2)
 
-player colors:
+player colors in ANSITerminal:
 red
 blue
 cyan
 green
 
 
-Right aka odd x:
+Paths out of corners with odd x coordinates:
 
 - -
      X  + 0
 - 0
 
 
-Left aka even x:
+Paths out of corners with even x coordinates:
           + 0
 - 0   X
           + +
 
+Leftmost corners of each tile:
 A 0 0
 B 2 0
 C 4 0
