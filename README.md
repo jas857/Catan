@@ -1,6 +1,6 @@
 # Settlers of OCaml
 
-Settlers of OCaml was created as a final project for CS3110 at Cornell University. The project was open-ended, and we made our goal to implement a simulator of the board game Settlers of Catan in the language OCaml. We have included an Artificial Intelligence (AI) player that can play the game as a beginner with the rest of the players. The game is turn based, as is the board game, and allows each player to build roads, settlements, development cards or cities, trade with other players, roll dice, or use development cards.  
+Settlers of OCaml was created as a final project for CS3110 at Cornell University by Kevin Gregor, Jim Stahlkrantz, Henrik Lempa-Cho, and Nick Parker. The project was open-ended, and we made our goal to implement a simulator of the board game Settlers of Catan in the language OCaml. We have included an Artificial Intelligence (AI) player that can play the game as a beginner with the rest of the players. The game is turn based, as is the board game, and allows each player to build roads, settlements, development cards or cities, trade with other players, roll dice, or use development cards.  
 
 Some of the key features in the project are listed below:
   - Display of hexagonal game board using ANSITerminal
